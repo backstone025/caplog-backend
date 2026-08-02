@@ -39,7 +39,7 @@ public class SecurityConfig {
                                 "/v3/api-docs",
                                 "/v3/api-docs/**",
                                 "/v3/api-docs.yaml",
-                                "/api/auth/**"    // 최초 로그인 시 열어둘 주소
+                                "/api/users/**"    // 최초 로그인 시 열어둘 주소
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

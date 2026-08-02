@@ -11,6 +11,13 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class Users {
+    public static Users createUsers(String username, String password) {
+        Users user = new Users();
+        user.username = username;
+        user.password = password;
+        return user;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
