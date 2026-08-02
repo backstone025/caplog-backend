@@ -11,6 +11,8 @@ services:
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+      - TOKEN_PUBLIC_KEY=${TOKEN_PUBLIC_KEY}
+      - TOKEN_PRIVATE_KEY=${TOKEN_PRIVATE_KEY}
     depends_on:
       db:
         condition: service_healthy # DB가 완전히 구동 완료된 후 백엔드 실행
