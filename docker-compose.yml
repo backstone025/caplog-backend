@@ -1,12 +1,44 @@
 services:
   caplog-api:
-    image: 242777378795.dkr.ecr.ap-northeast-2.amazonaws.com/caplog-api:lastest
+    build: .
     container_name: caplog-api
     restart: unless-stopped
     expose:
       - "8080"
+    environment:
+      # 내부 도커 네트워크의 db 서비스(caplog-db)로 연결
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+    depends_on:
+      db:
+        condition: service_healthy # DB가 완전히 구동 완료된 후 백엔드 실행
     networks:
       - app-network
+
+  db:
+    image: mysql:8.0
+    container_name: caplog-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${SPRING_DATASOURCE_USERNAME}
+      MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      TZ: Asia/Seoul
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck: # DB 가동 완료 체크
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - app-network
+
   nginx:
     image: nginx:alpine
     container_name: nginx
@@ -19,6 +51,11 @@ services:
       - caplog-api
     networks:
       - app-network
+
 networks:
   app-network:
     driver: bridge
+
+# 로컬 DB 데이터 보존용 볼륨 선언
+volumes:
+  mysql_data:
