@@ -41,6 +41,15 @@ services:
     networks:
       - app-network
 
+  qdrant:
+    image: qdrant/qdrant:v1.9.0
+    container_name: qdrant-dev
+    ports:
+      - "6333:6333" # HTTP API 및 대시보드
+      - "6334:6334" # gRPC (Spring AI 기본 통신 포트)
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+
   nginx:
     image: nginx:alpine
     container_name: nginx
