@@ -44,7 +44,13 @@ public class VectorService {
                 .withFilterExpression("user_id == " + userId); // 다른 사용자 데이터 접근 차단
 
         List<Document> results = vectorStore.similaritySearch(searchRequest);
-        log.info("Qdrant 유사도 검색 (user_id : {}) - {}개", userId, results);
+        log.info("Qdrant 유사도 검색 - user_id : {} / {}개", userId, results);
         return results;
+    }
+
+    public void deleteScheduleVector(Schedule schedule) {
+        String filter = String.format("user_id == %d && schedule_id == %d", schedule.getUser().getId(), schedule.getId());
+        vectorStore.delete(List.of(filter));
+        log.info("Qdrant 삭제 - schedule_id : {}", schedule.getId());
     }
 }
