@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: caplog
+
+  profiles:
+    default: local
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
