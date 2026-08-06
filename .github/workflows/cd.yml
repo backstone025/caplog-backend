@@ -30,19 +30,48 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       - name: ECR 로그인
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-      - name: Docker 이미지 빌드 & ECR push
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Docker 이미지 빌드 및 ECR Push
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          set -e
+            
+          IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
+            
+          echo "빌드할 이미지: ${IMAGE_URI}"
+            
+          docker build -t "${IMAGE_URI}" .
+          docker push "${IMAGE_URI}"
+
+      - name: ECR 이미지 등록 확인
+        run: |
+          aws ecr describe-images \
+            --repository-name "${ECR_REPOSITORY}" \
+            --image-ids imageTag=latest \
+            --region "${AWS_REGION}"
+
       - name: EC2 배포
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e
+                  
             cd /home/ubuntu/caplog
-            aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 242777378795.dkr.ecr.ap-northeast-2.amazonaws.com
+                  
+            git fetch origin
+            git reset --hard origin/main
+                  
+            aws ecr get-login-password --region ap-northeast-2 \
+              | docker login \
+                --username AWS \
+                --password-stdin \
+                242777378795.dkr.ecr.ap-northeast-2.amazonaws.com
+                  
             docker compose pull
             docker compose up -d
+                  
+            docker compose ps
+            docker image prune -f
