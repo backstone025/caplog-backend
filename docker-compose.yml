@@ -13,6 +13,7 @@ services:
       - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
       - TOKEN_PUBLIC_KEY=${TOKEN_PUBLIC_KEY}
       - TOKEN_PRIVATE_KEY=${TOKEN_PRIVATE_KEY}
+      - SPRING_AI_OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       db:
         condition: service_healthy # DB가 완전히 구동 완료된 후 백엔드 실행
@@ -38,6 +39,17 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - app-network
+
+  qdrant:
+    image: qdrant/qdrant:v1.9.0
+    container_name: qdrant
+    ports:
+      - "6333:6333" # HTTP API 및 대시보드
+      - "6334:6334" # gRPC (Spring AI 기본 통신 포트)
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
     networks:
       - app-network
 
