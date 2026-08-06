@@ -1,12 +1,10 @@
 package com.example.caplog.domain.ai.vector;
 
-import com.example.caplog.domain.schedule.ScheduleRepository;
 import com.example.caplog.domain.schedule.entity.Schedule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.ai.vectorstore.qdrant.QdrantVectorStore;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +17,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class VectorService {
     private final QdrantVectorStore vectorStore;
-    private final ScheduleRepository scheduleRepository;
 
     public void saveScheduleVector(Schedule schedule) {
         // 1. 한 문장으로 스케쥴 압축 + 고유 Document Id 생성
@@ -89,7 +86,7 @@ public class VectorService {
     }
 
     private String getDocumentId(String userId, String scheduleId) {
-        String rawKey = "user" + userId + "_schedule" + scheduleId;
+        String rawKey = "user" + userId + "_schedule" + scheduleId; // user id와 schedule id가 복합 기본키로 동작하기에 따로 검증은 안한다.
         return UUID.nameUUIDFromBytes(rawKey.getBytes()).toString();
     }
 }
