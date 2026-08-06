@@ -38,10 +38,12 @@ public class VectorService {
     }
 
     public List<Document> searchScheduleVector(Long userId, String query) {
-        SearchRequest searchRequest = SearchRequest.query(query)
-                .withTopK(5)                                                // 가장 유사한 상위 5개
-                .withSimilarityThreshold(0.5)                               // 유사도 50% 이상
-                .withFilterExpression("user_id == " + userId); // 다른 사용자 데이터 접근 차단
+        SearchRequest searchRequest = SearchRequest.builder()
+                .query(query)
+                .topK(5)                                                // 가장 유사한 상위 5개
+                .similarityThreshold(0.5)                               // 유사도 50% 이상
+                .filterExpression("user_id == " + userId)  // 다른 사용자 데이터 접근 차단
+                .build();
 
         List<Document> results = vectorStore.similaritySearch(searchRequest);
         log.info("Qdrant 유사도 검색 - user_id : {} / {}개", userId, results);
