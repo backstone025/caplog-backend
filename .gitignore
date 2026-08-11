@@ -71,3 +71,6 @@ replay_pid*
 
 # Mobile Tools for Java
 .mtj.tmp/
+
+# Qudrant
+qdrant_storage/
