@@ -59,7 +59,7 @@ out/
 # Environment and secret files
 .env
 .env.*
-application-local.yml
+application-local.yaml
 application-secret.yml
 
 # JVM crash logs
