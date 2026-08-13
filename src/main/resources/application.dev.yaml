@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/caplog?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: dusen7764
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # 로컬 개발 환경용 Qdrant 접속 정보
+  ai:
+    vectorstore:
+      qdrant:
+        host: localhost # 로컬에서 스프링을 직접 돌릴 때는 localhost (도커 네임스페이스 주의)
+        port: 6334
