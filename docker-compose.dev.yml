@@ -6,14 +6,28 @@ services:
     expose:
       - "8080"
     environment:
-      # 내부 도커 네트워크의 db 서비스(caplog-db)로 연결
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
-      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
-      - TOKEN_PUBLIC_KEY=${TOKEN_PUBLIC_KEY}
-      - TOKEN_PRIVATE_KEY=${TOKEN_PRIVATE_KEY}
-      - SPRING_AI_OPENAI_API_KEY=${OPENAI_API_KEY}
+      # Profile 지정
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+
+      # 로컬 DB 컨테이너(db:3306)로 연결
+      DB_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      DB_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      DB_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
+
+      # Security & Token
+      TOKEN_PUBLIC_KEY: ${TOKEN_PUBLIC_KEY}
+      TOKEN_PRIVATE_KEY: ${TOKEN_PRIVATE_KEY}
+
+      # AI & Vector DB
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      QDRANT_HOST: ${QDRANT_HOST}
+      QDRANT_PORT: ${QDRANT_PORT}
+
+      # AWS S3
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     depends_on:
       qdrant:
         condition: service_healthy
@@ -29,8 +43,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${SPRING_DATASOURCE_USERNAME}
-      MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       TZ: Asia/Seoul
     ports:
       - "3308:3306"
