@@ -25,17 +25,23 @@ public class ImagesService {
             MultipartFile file,
             Users user
     ) {
+
+        System.out.println("=== ImagesService upload 진입 ===");
+
         String imageKey = s3Service.upload(
                 file,
                 user.getUsersId()
         );
 
+        System.out.println("=== S3에서 받은 imageKey: " + imageKey + " ===");
+
         Images image = Images.builder()
                 .user(user)
-                .ocrText(null)
                 .imageStatus(ImageStatus.PENDING)
                 .imageKey(imageKey)
                 .build();
+
+        System.out.println("=== Images DB 저장 직전 ===");
 
         return imagesRepository.save(image);
     }

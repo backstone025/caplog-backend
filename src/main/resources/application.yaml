@@ -16,7 +16,7 @@ spring:
       api-key: ${OPENAI_API_KEY}
     vectorstore:
       qdrant:
-        host: ${QDRANT_HOST:qdrant}
-        port: 6334
+        host: ${QDRANT_HOST:localhost}
+        port: ${QDRANT_PORT:6334}
         collection-name: user_schedules
         initialize-schema: true
