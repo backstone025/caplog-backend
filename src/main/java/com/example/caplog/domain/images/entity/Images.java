@@ -4,29 +4,59 @@ import com.example.caplog.domain.images.type.ImageStatus;
 import com.example.caplog.domain.users.entity.Users;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "images")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Images {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long imageId;               // 이미지 아이디
+    @Column(name = "image_id")
+    private Long imageId;
 
-    @JoinColumn(name = "user_id")
     @ManyToOne(fetch = FetchType.LAZY)
-    private Users user;                 // 사용자
+    @JoinColumn(name = "user_id", nullable = false)
+    private Users user;
 
-    private String ocrText;             // 추출 텍스트
+    @Column(name = "ocr_text", columnDefinition = "TEXT")
+    private String ocrText;
 
     @Enumerated(EnumType.STRING)
-    private ImageStatus imageStatus;    // 처리 상태
+    @Column(name = "image_status", nullable = false, length = 20)
+    private ImageStatus imageStatus;
 
-    private String imageKey;            // 이미지 키
+    @Column(name = "image_key", nullable = false, length = 500)
+    private String imageKey;
 
-    private LocalDateTime createdAt;    // 생성 일시
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Builder
+    public Images(
+            Users user,
+            String ocrText,
+            ImageStatus imageStatus,
+            String imageKey
+    ) {
+        this.user = user;
+        this.ocrText = ocrText;
+        this.imageStatus = imageStatus;
+        this.imageKey = imageKey;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public void updateOcrText(String ocrText) {
+        this.ocrText = ocrText;
+    }
+
+    public void updateStatus(ImageStatus imageStatus) {
+        this.imageStatus = imageStatus;
+    }
 }
