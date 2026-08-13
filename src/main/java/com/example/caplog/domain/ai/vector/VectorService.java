@@ -1,6 +1,6 @@
 package com.example.caplog.domain.ai.vector;
 
-import com.example.caplog.domain.schedule.entity.Schedule;
+import com.example.caplog.domain.schedule.entity.DemoSchedule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
@@ -18,18 +18,18 @@ import java.util.UUID;
 public class VectorService {
     private final QdrantVectorStore vectorStore;
 
-    public void saveScheduleVector(Schedule schedule) {
+    public void saveScheduleVector(DemoSchedule demoSchedule) {
         // 1. 한 문장으로 스케쥴 압축 + 고유 Document Id 생성
         String formattedContent = String.format("[%s] %s | %s ~ %s | description: %s",
-                schedule.getCategory(),
-                schedule.getTitle(),
-                schedule.getStartTime(),
-                schedule.getEndTime(),
-                schedule.getDescription());
+                demoSchedule.getCategory(),
+                demoSchedule.getTitle(),
+                demoSchedule.getStartTime(),
+                demoSchedule.getEndTime(),
+                demoSchedule.getDescription());
         log.info("[Vector] 한 문장으로 스케쥴 압축");
 
-        String userId = schedule.getUser().getId().toString();
-        String scheduleId = schedule.getId().toString();
+        String userId = demoSchedule.getUser().getUsersId().toString();
+        String scheduleId = demoSchedule.getId().toString();
         String docId = this.getDocumentId(userId, scheduleId);
 
         // 2. Document 객체 생성
@@ -66,13 +66,13 @@ public class VectorService {
         return results;
     }
 
-    public void deleteScheduleVector(Schedule schedule) {
-        if (schedule == null || schedule.getUser() == null) {
+    public void deleteScheduleVector(DemoSchedule demoSchedule) {
+        if (demoSchedule == null || demoSchedule.getUser() == null) {
             log.warn("[Vector] 삭제 실패: Schedule 또는 User 정보가 null입니다.");
             return;
         }
-        String userId = schedule.getUser().getId().toString();
-        String scheduleId = schedule.getId().toString();
+        String userId = demoSchedule.getUser().getUsersId().toString();
+        String scheduleId = demoSchedule.getId().toString();
         String docId = this.getDocumentId(userId, scheduleId);
 
         log.info("[Vector] Qdrant 삭제 시도 - user_id: {}, schedule_id: {}", userId, scheduleId);

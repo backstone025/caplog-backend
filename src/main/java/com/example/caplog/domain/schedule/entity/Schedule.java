@@ -1,34 +1,30 @@
 package com.example.caplog.domain.schedule.entity;
 
-import com.example.caplog.domain.schedule.type.Category;
-import com.example.caplog.domain.users.entity.Users;
+import com.example.caplog.domain.groups.entity.Groups;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
 public class Schedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long scheduleId;            // 일정 아이디
 
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "group_id")
     @ManyToOne(fetch = FetchType.LAZY)
-    Users user;
+    private Groups groups;              // 그룹
 
-    @Enumerated(EnumType.STRING)
-    Category category;
+    private String title;               // 일정 제목
 
-    LocalDateTime startTime;
+    private LocalDateTime viewedAt;     // 열람 일시
 
-    LocalDateTime endTime;
+    private LocalDateTime createdAt;    // 생성 일시
 
-    String title;
-
-    String description;
+    private LocalDateTime updatedAt;    // 수정 일시
 }

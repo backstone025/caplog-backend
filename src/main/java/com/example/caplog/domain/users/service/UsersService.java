@@ -40,7 +40,7 @@ public class UsersService {
         Users user = usersRepository.findByUsername(authentication.getName());
 
         // 3. 토큰 발행
-        String accessToken = jwtProvider.createToken(authentication, 3600L * 24 * 7, user.getId());
+        String accessToken = jwtProvider.createToken(authentication, 3600L * 24 * 7, user.getUsersId());
 
         return new UsersAuthResponse(accessToken);
     }

@@ -29,7 +29,7 @@ public class ChatTestController {
     @PostMapping("/extract")
     public ResponseEntity<ApiResponse<AiChatResponse>> extract(@RequestBody CaptureContext capture) {
         Users user = usersRepository.findById(usersService.getUserId()).orElseThrow();
-        VectorContext vector = VectorContext.from(vectorService.searchScheduleVector(user.getId(), capture.text()));
+        VectorContext vector = VectorContext.from(vectorService.searchScheduleVector(user.getUsersId(), capture.text()));
         AiChatRequest request = new AiChatRequest(capture, vector);
 
         AiChatResponse response = chatService.extractSchedules(request);

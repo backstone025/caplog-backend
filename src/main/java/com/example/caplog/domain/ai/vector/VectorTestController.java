@@ -1,7 +1,7 @@
 package com.example.caplog.domain.ai.vector;
 
-import com.example.caplog.domain.schedule.ScheduleRepository;
-import com.example.caplog.domain.schedule.entity.Schedule;
+import com.example.caplog.domain.schedule.DemoScheduleRepository;
+import com.example.caplog.domain.schedule.entity.DemoSchedule;
 import com.example.caplog.domain.schedule.type.Category;
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.domain.users.repository.UsersRepository;
@@ -27,13 +27,13 @@ public class VectorTestController {
     private final VectorService vectorService;
     private final UsersService usersService;
     private final UsersRepository usersRepository;
-    private final ScheduleRepository scheduleRepository;
+    private final DemoScheduleRepository demoScheduleRepository;
 
     @PostMapping("/save")
     @Transactional
     public ApiResponse<String> saveVector(@RequestBody VectorSaveRequest request) {
         Users user = usersRepository.findById(usersService.getUserId()).orElseThrow();
-        Schedule mockSchedule = Schedule.builder()
+        DemoSchedule mockDemoSchedule = DemoSchedule.builder()
                 .user(user)
                 .category(Category.DEFAULT)
                 .startTime(LocalDateTime.now())
@@ -41,9 +41,9 @@ public class VectorTestController {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .build();
-        scheduleRepository.saveAndFlush(mockSchedule);
+        demoScheduleRepository.saveAndFlush(mockDemoSchedule);
         log.info("[DB] 저장 : {}", request.getTitle());
-        vectorService.saveScheduleVector(mockSchedule);
+        vectorService.saveScheduleVector(mockDemoSchedule);
         log.info("[Vector] 저장 : {}", request.getTitle());
         return ApiResponse.success("Qdrant에 성공적으로 저장되었습니다.");
     }
@@ -58,12 +58,12 @@ public class VectorTestController {
     @DeleteMapping("/delete")
     @Transactional
     public ApiResponse<String> deleteVector(@RequestParam("id") Long id) {
-        Schedule mockSchedule = scheduleRepository.findById(id).orElseThrow();
-        String title = mockSchedule.getTitle();
+        DemoSchedule mockDemoSchedule = demoScheduleRepository.findById(id).orElseThrow();
+        String title = mockDemoSchedule.getTitle();
 
-        vectorService.deleteScheduleVector(mockSchedule);
+        vectorService.deleteScheduleVector(mockDemoSchedule);
         log.info("[Vector] 삭제 : {}", title);
-        scheduleRepository.delete(mockSchedule);
+        demoScheduleRepository.delete(mockDemoSchedule);
         log.info("[DB] 삭제 : {}", title);
         return ApiResponse.success("delete [ID: " + id + "] title : " + title);
     }
