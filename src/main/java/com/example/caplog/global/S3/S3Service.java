@@ -26,9 +26,13 @@ public class S3Service {
 
     public String upload(MultipartFile file, Long userId) {
 
+        System.out.println("=== S3 upload 시작 ===");
+
         validateFile(file);
+        System.out.println("=== 파일 검증 통과 ===");
 
         String key = createKey(file, userId);
+        System.out.println("=== 생성된 key: " + key + " ===");
 
         try {
             PutObjectRequest request = PutObjectRequest.builder()
@@ -37,14 +41,22 @@ public class S3Service {
                     .contentType(file.getContentType())
                     .build();
 
+            System.out.println("=== S3 putObject 호출 직전 ===");
+
             s3Client.putObject(
                     request,
                     RequestBody.fromBytes(file.getBytes())
             );
 
+            System.out.println("=== S3 업로드 성공 ===");
+
             return key;
 
-        } catch (IOException | S3Exception e) {
+        } catch (Exception e) {
+            System.out.println("=== S3 업로드 실패 ===");
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+
             throw new GeneralException(
                     GlobalErrorCode.S3_UPLOAD_FAILED
             );

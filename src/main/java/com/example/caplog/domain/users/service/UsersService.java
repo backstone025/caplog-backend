@@ -30,6 +30,18 @@ public class UsersService {
         return (Long) Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getDetails();
     }
 
+    //id로 실제 user 엔티티 조회
+    public Users getCurrentUser() {
+        Long userId = getUserId();
+
+        return usersRepository.findById(userId)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException(
+                                "존재하지 않는 사용자입니다."
+                        )
+                );
+    }
+
     public UsersAuthResponse login(UsersAuthRequest request) {
         // 1. 인증 위임 (검증 및 인증 객체 생성)
         Authentication authentication = authenticationManager.authenticate(
@@ -37,7 +49,7 @@ public class UsersService {
         );
 
         // 2. 인증된 객체에서 username을 추출 (DB에서 안전하게 다시 조회)
-        Users user = usersRepository.findByUsername(authentication.getName());
+        Users user = usersRepository.findByLoginId(authentication.getName());
 
         // 3. 토큰 발행
         String accessToken = jwtProvider.createToken(authentication, 3600L * 24 * 7, user.getUsersId());
@@ -62,9 +74,9 @@ public class UsersService {
 
     // 중복된 사용자에 대한 검증
     private void checkUsernameExists(String username) {
-        Users user = usersRepository.findByUsername(username);
+        Users user = usersRepository.findByLoginId(username);
         if (user != null) { // 유저가 존재하면 중복이므로 에러!
-            throw new UsernameNotFoundException("존재하지 않는 사용자 아이디입니다. : " + username);
+            throw new UsernameNotFoundException("이미 존재하는 사용자 아이디입니다 : " + username);
         }
     }
 }

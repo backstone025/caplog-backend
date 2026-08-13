@@ -10,3 +10,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+cloud:
+  aws:
+    s3:
+      bucket: caplog-image
