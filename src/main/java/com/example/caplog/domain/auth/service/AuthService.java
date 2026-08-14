@@ -2,9 +2,11 @@ package com.example.caplog.domain.auth.service;
 
 import com.example.caplog.domain.auth.dto.UsersAuthRequest;
 import com.example.caplog.domain.auth.dto.UsersAuthResponse;
+import com.example.caplog.domain.auth.exception.AuthException;
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.domain.users.repository.UsersRepository;
 import com.example.caplog.global.config.auth.JwtProvider;
+import com.example.caplog.global.error.exception.GeneralException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -60,6 +62,8 @@ public class AuthService {
     public UsersAuthResponse signup(UsersAuthRequest request) {
         //1. 검증
         checkUsernameExists(request.username());
+        checkUserLoginIdForm(request.username());
+        checkUserPasswordForm(request.password());
         String encodedPassword = passwordEncoder.encode(request.password());
 
         //2. 저장
@@ -76,7 +80,35 @@ public class AuthService {
     private void checkUsernameExists(String username) {
         Users user = usersRepository.findByLoginId(username);
         if (user != null) { // 유저가 존재하면 중복이므로 에러!
-            throw new UsernameNotFoundException("이미 존재하는 사용자 아이디입니다 : " + username);
+            throw new GeneralException(AuthException.LOGIN_ID_ALREADY_EXIST);
+        }
+    }
+
+    // 로그인 아이디에 대한 검증
+    private void checkUserLoginIdForm(String loginId){
+        // 공백 체크
+        if(loginId == null || loginId.isBlank()){
+            throw new GeneralException(AuthException.LOGIN_ID_BAD_FORM);
+        }
+        // 한글, 영어(대소문자) 20자 이내
+        String regex = "^[a-zA-Z가-힣]{1,20}$";
+
+        if(!loginId.matches(regex)){
+            throw new GeneralException(AuthException.LOGIN_ID_BAD_FORM);
+        }
+    }
+
+    // 비밀번호에 대한 검증
+    private  void checkUserPasswordForm(String password){
+        // 공백 체크
+        if(password == null || password.isBlank()){
+            throw new GeneralException(AuthException.PASSWORD_BAD_FORM);
+        }
+
+        // 숫자 4자리
+        String regex = "^[0-9]{4}$";
+        if(!password.matches(regex)){
+            throw new GeneralException(AuthException.PASSWORD_BAD_FORM);
         }
     }
 }
