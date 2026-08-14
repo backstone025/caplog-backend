@@ -4,6 +4,8 @@ import com.example.caplog.domain.auth.dto.UsersAuthRequest;
 import com.example.caplog.domain.auth.dto.UsersAuthResponse;
 import com.example.caplog.domain.auth.exception.AuthException;
 import com.example.caplog.domain.users.entity.Users;
+import com.example.caplog.domain.users.entity.UsersDetails;
+import com.example.caplog.domain.users.repository.UsersDetailsRepository;
 import com.example.caplog.domain.users.repository.UsersRepository;
 import com.example.caplog.global.config.auth.JwtProvider;
 import com.example.caplog.global.error.exception.GeneralException;
@@ -24,6 +26,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class AuthService {
     private final UsersRepository usersRepository;
+    private final UsersDetailsRepository userDetailsRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
@@ -60,19 +63,22 @@ public class AuthService {
     }
 
     public UsersAuthResponse signup(UsersAuthRequest request) {
-        //1. 검증
+        // 1. 검증
         checkUsernameExists(request.username());
         checkUserLoginIdForm(request.username());
         checkUserPasswordForm(request.password());
         String encodedPassword = passwordEncoder.encode(request.password());
 
-        //2. 저장
-        //Users 객체 생성
+        // 2. 저장
+        // Users 객체 생성
         Users user = Users.createUsers(request.username(), encodedPassword);
-        //DB 저장
+        // UsersDetails 객체 생성
+        UsersDetails usersDetails = UsersDetails.createUsersDetails(user, false);
+        // DB 저장
         usersRepository.save(user);
+        userDetailsRepository.save(usersDetails);
 
-        //3. 반환
+        // 3. 반환
         return login(request);
     }
 
