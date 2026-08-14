@@ -8,7 +8,7 @@ import com.example.caplog.domain.ai.chat.service.ChatService;
 import com.example.caplog.domain.ai.vector.VectorService;
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.domain.users.repository.UsersRepository;
-import com.example.caplog.domain.users.service.UsersService;
+import com.example.caplog.domain.auth.service.AuthService;
 import com.example.caplog.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,14 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/test/chat")
 @RequiredArgsConstructor
 public class ChatTestController {
-    private final UsersService usersService;
+    private final AuthService authService;
     private final UsersRepository usersRepository;
     private final VectorService vectorService;
     private final ChatService chatService;
 
     @PostMapping("/extract")
     public ResponseEntity<ApiResponse<AiChatResponse>> extract(@RequestBody CaptureContext capture) {
-        Users user = usersRepository.findById(usersService.getUserId()).orElseThrow();
+        Users user = usersRepository.findById(authService.getUserId()).orElseThrow();
         VectorContext vector = VectorContext.from(vectorService.searchScheduleVector(user.getUsersId(), capture.text()));
         AiChatRequest request = new AiChatRequest(capture, vector);
 

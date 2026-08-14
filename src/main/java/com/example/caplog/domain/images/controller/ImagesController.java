@@ -3,7 +3,7 @@ package com.example.caplog.domain.images.controller;
 import com.example.caplog.domain.images.entity.Images;
 import com.example.caplog.domain.images.service.ImagesService;
 import com.example.caplog.domain.users.entity.Users;
-import com.example.caplog.domain.users.service.UsersService;
+import com.example.caplog.domain.auth.service.AuthService;
 import com.example.caplog.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ImagesController {
 
     private final ImagesService imagesService;
-    private final UsersService usersService;
+    private final AuthService authService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> uploadImage(
@@ -24,7 +24,7 @@ public class ImagesController {
     ) {
 
         // 1. 현재 로그인 사용자 조회
-        Users user = usersService.getCurrentUser();
+        Users user = authService.getCurrentUser();
 
         // 2. S3 업로드 + Images DB 저장
         Images savedImage = imagesService.upload(

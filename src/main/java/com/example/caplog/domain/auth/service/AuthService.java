@@ -1,7 +1,7 @@
-package com.example.caplog.domain.users.service;
+package com.example.caplog.domain.auth.service;
 
-import com.example.caplog.domain.users.dto.UsersAuthRequest;
-import com.example.caplog.domain.users.dto.UsersAuthResponse;
+import com.example.caplog.domain.auth.dto.UsersAuthRequest;
+import com.example.caplog.domain.auth.dto.UsersAuthResponse;
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.domain.users.repository.UsersRepository;
 import com.example.caplog.global.config.auth.JwtProvider;
@@ -20,7 +20,7 @@ import java.util.Objects;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class UsersService {
+public class AuthService {
     private final UsersRepository usersRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
