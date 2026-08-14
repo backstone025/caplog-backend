@@ -1,4 +1,4 @@
-package com.example.caplog.domain.users.service;
+package com.example.caplog.domain.auth.service;
 
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.domain.users.repository.UsersRepository;

@@ -1,4 +1,4 @@
-package com.example.caplog.domain.users.dto;
+package com.example.caplog.domain.auth.dto;
 
 public record UsersAuthResponse(
         String token

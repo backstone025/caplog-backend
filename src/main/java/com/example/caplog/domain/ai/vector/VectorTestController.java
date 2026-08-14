@@ -5,7 +5,7 @@ import com.example.caplog.domain.schedule.entity.DemoSchedule;
 import com.example.caplog.domain.schedule.type.Category;
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.domain.users.repository.UsersRepository;
-import com.example.caplog.domain.users.service.UsersService;
+import com.example.caplog.domain.auth.service.AuthService;
 import com.example.caplog.global.response.ApiResponse;
 import jakarta.transaction.Transactional;
 import lombok.Getter;
@@ -25,14 +25,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VectorTestController {
     private final VectorService vectorService;
-    private final UsersService usersService;
+    private final AuthService authService;
     private final UsersRepository usersRepository;
     private final DemoScheduleRepository demoScheduleRepository;
 
     @PostMapping("/save")
     @Transactional
     public ApiResponse<String> saveVector(@RequestBody VectorSaveRequest request) {
-        Users user = usersRepository.findById(usersService.getUserId()).orElseThrow();
+        Users user = usersRepository.findById(authService.getUserId()).orElseThrow();
         DemoSchedule mockDemoSchedule = DemoSchedule.builder()
                 .user(user)
                 .category(Category.DEFAULT)
@@ -50,7 +50,7 @@ public class VectorTestController {
 
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<Document>>> searchVector(@RequestParam("query") String query) {
-        Long userId = usersService.getUserId();
+        Long userId = authService.getUserId();
         List<Document> results = vectorService.searchScheduleVector(userId, query);
         return ResponseEntity.ok(ApiResponse.success(results));
     }
