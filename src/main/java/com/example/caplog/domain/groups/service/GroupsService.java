@@ -1,5 +1,6 @@
 package com.example.caplog.domain.groups.service;
 
+import com.example.caplog.domain.groups.dto.GroupsGetCategoriesResponse;
 import com.example.caplog.domain.groups.dto.GroupsUpdateRequest;
 import com.example.caplog.domain.groups.dto.GroupsUpdateResponse;
 import com.example.caplog.domain.groups.entity.Groups;
@@ -11,12 +12,22 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class GroupsService {
     private final GroupsRepository groupsRepository;
 
+    // #5 그룹 카테고리 목록 조회 API
+    public GroupsGetCategoriesResponse getCategories() {
+        List<Category> categories = Arrays.asList(Category.values());
+        return new GroupsGetCategoriesResponse(categories);
+    }
+
+    // #6 그룹 수정 API
     public GroupsUpdateResponse updateGroups(Long groupId, GroupsUpdateRequest request){
         // 그룹 추출
         Groups group = groupsRepository.findById(groupId)
