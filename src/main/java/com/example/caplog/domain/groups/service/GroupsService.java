@@ -1,14 +1,20 @@
 package com.example.caplog.domain.groups.service;
 
+import com.example.caplog.domain.auth.service.AuthService;
 import com.example.caplog.domain.groups.dto.GroupsGetCategoriesResponse;
+import com.example.caplog.domain.groups.dto.GroupsGetGroupListResponse;
 import com.example.caplog.domain.groups.dto.GroupsUpdateRequest;
 import com.example.caplog.domain.groups.dto.GroupsUpdateResponse;
 import com.example.caplog.domain.groups.entity.Groups;
 import com.example.caplog.domain.groups.exception.GroupsException;
 import com.example.caplog.domain.groups.repository.GroupsRepository;
 import com.example.caplog.domain.groups.type.Category;
+import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.global.error.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +25,38 @@ import java.util.List;
 @Transactional
 @RequiredArgsConstructor
 public class GroupsService {
+    private final AuthService authService;
     private final GroupsRepository groupsRepository;
+
+    // #4 그룹/단일 일정 전체 조회 API
+    public GroupsGetGroupListResponse getGroups(int page){
+        Users user = authService.getCurrentUser();
+        int pageSize = 1;
+
+        // 1. PageRequest 생성
+        Pageable pageable = PageRequest.of(page, pageSize);
+
+        // 2. DB 조회
+        Page<Groups> groupsPage = groupsRepository.findAllByUser(user, pageable);
+
+        // 3. 페이지 범위 유효성 검증
+        checkPageRange(groupsPage);
+
+        // 4. DTO 변환 및 반환
+        return GroupsGetGroupListResponse.from(groupsPage);
+    }
+
+    private void checkPageRange(Page<Groups> groupsPage){
+        int page = groupsPage.getNumber();
+        int totalPages = groupsPage.getTotalPages();
+
+        // 경우 1. 음수 페이지 요청 시
+        // 경우 2. 데이터가 없을 때 (totalPages == 0) -> page가 0보다 크면 에러 (0 허용)
+        // 경우 3. 데이터가 있을 때 (totalPages > 0) -> page가 totalPages 이상이면 에러 (0 ~ totalPages-1 허용)
+        if (page < 0 || (totalPages == 0 && page > 0) || (totalPages > 0 && page >= totalPages)) {
+            throw new GeneralException(GroupsException.GROUP_PAGE_BAD_RANGE);
+        }
+    }
 
     // #5 그룹 카테고리 목록 조회 API
     public GroupsGetCategoriesResponse getCategories() {
