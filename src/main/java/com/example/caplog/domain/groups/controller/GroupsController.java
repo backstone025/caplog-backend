@@ -1,9 +1,6 @@
 package com.example.caplog.domain.groups.controller;
 
-import com.example.caplog.domain.groups.dto.GroupsGetGroupListResponse;
-import com.example.caplog.domain.groups.dto.GroupsGetCategoriesResponse;
-import com.example.caplog.domain.groups.dto.GroupsUpdateRequest;
-import com.example.caplog.domain.groups.dto.GroupsUpdateResponse;
+import com.example.caplog.domain.groups.dto.*;
 import com.example.caplog.domain.groups.service.GroupsService;
 import com.example.caplog.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -48,5 +45,15 @@ public class GroupsController {
     ){
         groupsService.deleteGroups(groupId);
         return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    // #8-1 그룹 상세 조회
+    @GetMapping("/details/{groupId}")
+    public ResponseEntity<ApiResponse<GroupsGetGroupDetailsResponse>> getGroupDetails(
+            @PathVariable Long groupId,
+            @RequestParam Integer page
+    ){
+        GroupsGetGroupDetailsResponse response = groupsService.getGroupDetails(groupId, page);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

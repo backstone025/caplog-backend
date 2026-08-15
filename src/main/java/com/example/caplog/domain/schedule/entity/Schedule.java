@@ -14,6 +14,16 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Schedule {
+    public boolean checkScheduleRecentlyUpdated() {
+        LocalDateTime updateTime = this.getUpdatedAt();
+        if (updateTime != null) {
+            // 12시간 전 < 업데이트 시기 < 지금 시각
+            return updateTime.isBefore(LocalDateTime.now())
+                    && updateTime.isAfter(LocalDateTime.now().plusHours(12));
+        }
+        return false;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long scheduleId;            // 일정 아이디

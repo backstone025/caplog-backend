@@ -6,14 +6,9 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 
 public record GroupsGetGroupListResponse(
-        PageInfo page,
+        GroupsPageInfo page,
         List<GroupElement> groupList
 ) {
-    public record PageInfo(
-            Integer totalPage,    // 총 페이지 수
-            Integer pageNumber   // 현재 페이지 번호
-    ) {
-    }
 
     public record GroupElement(
             Long groupId,         // 그룹/단일 일정 그룹 아이디
@@ -24,7 +19,7 @@ public record GroupsGetGroupListResponse(
     // List<Groups> -> GroupsGetGroupListResponse(DTO)로 변환해 주는 정적 팩토리 메서드
     public static GroupsGetGroupListResponse from(Page<Groups> groupsPage) {
         // Page 생성
-        PageInfo pageInfo = new PageInfo(
+        GroupsPageInfo groupsPageInfo = new GroupsPageInfo(
                 groupsPage.getTotalPages(),
                 groupsPage.getNumber()
         );
@@ -34,6 +29,6 @@ public record GroupsGetGroupListResponse(
                 .map(group -> new GroupElement(group.getGroupId(), group.getTitle()))
                 .toList();
 
-        return new GroupsGetGroupListResponse(pageInfo, groupElements);
+        return new GroupsGetGroupListResponse(groupsPageInfo, groupElements);
     }
 }

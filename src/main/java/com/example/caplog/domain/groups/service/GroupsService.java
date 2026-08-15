@@ -2,18 +2,20 @@ package com.example.caplog.domain.groups.service;
 
 import com.example.caplog.domain.ai.vector.VectorService;
 import com.example.caplog.domain.auth.service.AuthService;
-import com.example.caplog.domain.groups.dto.GroupsGetCategoriesResponse;
-import com.example.caplog.domain.groups.dto.GroupsGetGroupListResponse;
-import com.example.caplog.domain.groups.dto.GroupsUpdateRequest;
-import com.example.caplog.domain.groups.dto.GroupsUpdateResponse;
+import com.example.caplog.domain.event.entity.Event;
+import com.example.caplog.domain.event.repository.EventRepository;
+import com.example.caplog.domain.groups.dto.*;
 import com.example.caplog.domain.groups.entity.Groups;
 import com.example.caplog.domain.groups.exception.GroupsException;
 import com.example.caplog.domain.groups.repository.GroupsRepository;
 import com.example.caplog.domain.groups.type.Category;
+import com.example.caplog.domain.images.service.ImagesService;
+import com.example.caplog.domain.schedule.entity.Schedule;
 import com.example.caplog.domain.schedule.repository.ScheduleRepository;
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.global.error.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,15 +24,21 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class GroupsService {
     private final AuthService authService;
     private final GroupsRepository groupsRepository;
+    private final ScheduleRepository scheduleRepository;
+    private final EventRepository eventRepository;
     private final VectorService vectorService;
+    private final ImagesService imagesService;
 
     // #4 그룹/단일 일정 전체 조회 API
     public GroupsGetGroupListResponse getGroups(int page){
@@ -50,7 +58,7 @@ public class GroupsService {
         return GroupsGetGroupListResponse.from(groupsPage);
     }
 
-    private void checkPageRange(Page<Groups> groupsPage){
+    private void checkPageRange(Page<?> groupsPage){
         int page = groupsPage.getNumber();
         int totalPages = groupsPage.getTotalPages();
 
@@ -121,5 +129,35 @@ public class GroupsService {
         if(!Objects.equals(group.getGroupId(), userId)){
             throw new GeneralException(GroupsException.GROUP_USER_NOT_LOGIN_USER);
         }
+    }
+
+    // #8-1 그룹 상세 조회
+    public GroupsGetGroupDetailsResponse  getGroupDetails(Long groupId, Integer page){
+        Groups group = groupsRepository.findById(groupId)
+                .orElseThrow(() -> new GeneralException(GroupsException.GROUP_NOT_FOUND));
+
+        // 해당 그룹이 사용자 소유인지 여부 검증
+        checkGroupUser(group);
+        log.info("[groups]: #8-1 페이지 검사 통과");
+
+        // 해당 그룹의 일정들 추출
+        int pageSize = 100;
+        Pageable pageable = PageRequest.of(page, pageSize);
+        Page<Schedule> scheduleList = scheduleRepository.findByGroups(group, pageable);
+        log.info("[groups]: #8-1 그룹의 일정 추출 완료 : {}", scheduleList.getTotalPages());
+
+        // 각 일정들의 대표 이미지 추출(첫 event의 이미지를 기준으로 한다.)
+        List<Event> events = eventRepository.findFirstEventsWithImageByScheduleIn(scheduleList.toList());
+        log.info("[groups]: #8-1 일정별 이벤트 추출 완료 : {}", events.size());
+        Map<Long, String> images = events.stream()
+                .filter(event -> imagesService.getUrl(event.getImages()) != null)   // images가 null이 아닌 이벤트에 대해서 매핑
+                .collect(Collectors.toMap(
+                        event -> event.getSchedule().getScheduleId(),
+                        event -> imagesService.getUrl(event.getImages()),
+                        (existing, replacement) -> existing // 일정 중복 발생 시, 첫 번째 키 값으로 유지
+                ));
+        log.info("[groups]: #8-1 이벤트별 이미지 URL 추출 및 일정 매핑 완료 : {}", images.size());
+
+        return GroupsGetGroupDetailsResponse.from(group, scheduleList, images);
     }
 }
