@@ -99,4 +99,18 @@ public class ImagesService {
                         )
                 );
     }
+
+    // Images의 id -> 이미지 Full URL 출력하는 메소드
+    @Transactional
+    public String getUrl(Images image) {
+        // 이미지 정보가 없을 경우
+        if (image == null || image.getImageKey() == null) {
+            return null;
+        }
+        // 이미지 상태가 완료 상태일 경우만 URL 추출 시도
+        if(image.getImageStatus() == ImageStatus.COMPLETED){
+            return s3Service.getUrl(image.getImageKey());
+        }
+        return null;
+    }
 }

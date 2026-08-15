@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 
@@ -17,9 +19,10 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long eventId;               // 이벤트 아이디
 
-    @JoinColumn(name = "shcedule_id")
+    @JoinColumn(name = "schedule_id")
     @ManyToOne(fetch = FetchType.LAZY)
-    private Schedule shcedule;          // 일정 아이디
+    @OnDelete(action = OnDeleteAction.CASCADE)      // DB의 'On Delete Cascade' 기능 활성화
+    private Schedule schedule;          // 일정 아이디
 
     @JoinColumn(name = "image_id")
     @ManyToOne(fetch = FetchType.LAZY)
