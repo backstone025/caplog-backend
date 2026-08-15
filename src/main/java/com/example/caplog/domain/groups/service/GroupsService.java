@@ -1,5 +1,6 @@
 package com.example.caplog.domain.groups.service;
 
+import com.example.caplog.domain.ai.vector.VectorService;
 import com.example.caplog.domain.auth.service.AuthService;
 import com.example.caplog.domain.groups.dto.GroupsGetCategoriesResponse;
 import com.example.caplog.domain.groups.dto.GroupsGetGroupListResponse;
@@ -9,6 +10,7 @@ import com.example.caplog.domain.groups.entity.Groups;
 import com.example.caplog.domain.groups.exception.GroupsException;
 import com.example.caplog.domain.groups.repository.GroupsRepository;
 import com.example.caplog.domain.groups.type.Category;
+import com.example.caplog.domain.schedule.repository.ScheduleRepository;
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.global.error.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Transactional
@@ -27,11 +30,12 @@ import java.util.List;
 public class GroupsService {
     private final AuthService authService;
     private final GroupsRepository groupsRepository;
+    private final VectorService vectorService;
 
     // #4 그룹/단일 일정 전체 조회 API
     public GroupsGetGroupListResponse getGroups(int page){
         Users user = authService.getCurrentUser();
-        int pageSize = 1;
+        int pageSize = 100;
 
         // 1. PageRequest 생성
         Pageable pageable = PageRequest.of(page, pageSize);
@@ -69,6 +73,9 @@ public class GroupsService {
         // 그룹 추출
         Groups group = groupsRepository.findById(groupId)
                 .orElseThrow(() -> new GeneralException(GroupsException.GROUP_NOT_FOUND));
+        // 해당 그룹이 사용자 소유인지 검증하는 로직 추가
+        checkGroupUser(group);
+
         // 요청에서 그룹 이름 검사
         String title = request.groupName();
         checkGroupsNameFrom(title, groupId);
@@ -88,6 +95,31 @@ public class GroupsService {
         // 중복 체크(자기 자신 제외)
         if(groupsRepository.existsByTitleAndGroupIdNot(groupName, groupId)){
             throw new GeneralException(GroupsException.GROUP_NAME_ALREADY_EXIST);
+        }
+    }
+
+    // #7 그룹 삭제 API
+    public void  deleteGroups(Long groupId){
+        Groups group = groupsRepository.findById(groupId).orElseThrow(
+                () -> new GeneralException(GroupsException.GROUP_NOT_FOUND)
+        );
+        // 해당 그룹이 사용자 소유인지 검증하는 로직 추가
+        checkGroupUser(group);
+
+        // NOTE: 이미지 삭제는 당장 구현하지 않음 -> 추후 필요하면 batch 방식을 채택할 계획이다.
+
+        // 연관 그룹 vector DB 삭제
+        vectorService.deleteGroupsVector(group);
+
+        // groups-schedule-event Cascade 연쇄 삭제
+        groupsRepository.deleteById(groupId);
+    }
+
+    // 해당 그룹은 로그인한 사용자의 것인지 검증하는 기능
+    private void checkGroupUser(Groups group){
+        Long userId = authService.getUserId();
+        if(!Objects.equals(group.getGroupId(), userId)){
+            throw new GeneralException(GroupsException.GROUP_USER_NOT_LOGIN_USER);
         }
     }
 }

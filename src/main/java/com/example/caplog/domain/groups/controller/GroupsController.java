@@ -40,4 +40,13 @@ public class GroupsController {
         GroupsUpdateResponse response = groupsService.updateGroups(groupId, request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    // #7 그룹 삭제 API
+    @DeleteMapping("/{groupId}")
+    public ResponseEntity<ApiResponse<Void>> deleteGroup(
+            @PathVariable Long groupId
+    ){
+        groupsService.deleteGroups(groupId);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
 }

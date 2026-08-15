@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 
@@ -18,6 +20,7 @@ public class Schedule {
 
     @JoinColumn(name = "group_id")
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)      // DB의 'On Delete Cascade' 기능 활성화
     private Groups groups;              // 그룹
 
     private String title;               // 일정 제목
