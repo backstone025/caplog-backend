@@ -1,6 +1,6 @@
 package com.example.caplog.domain.groups.entity;
 
-import com.example.caplog.domain.schedule.type.Category;
+import com.example.caplog.domain.groups.type.Category;
 import com.example.caplog.domain.users.entity.Users;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -12,6 +12,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "groups_table")
 public class Groups {
+    public void updateGroups(Users user, String title, Category category) {
+        this.user = user;
+        this.title = title;
+        this.category = category;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long groupId;               // 그룹 아이디
