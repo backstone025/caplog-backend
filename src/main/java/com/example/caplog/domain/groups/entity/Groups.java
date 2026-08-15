@@ -12,6 +12,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "groups_table")
 public class Groups {
+    public static Groups createGroups(Users user, String title, Category category) {
+        Groups group = new Groups();
+        group.user = user;
+        group.title = title;
+        group.category = category;
+        return group;
+    }
+
     public void updateGroups(Users user, String title, Category category) {
         this.user = user;
         this.title = title;
