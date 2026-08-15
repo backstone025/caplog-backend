@@ -129,4 +129,15 @@ public class S3Service {
                 + UUID.randomUUID()
                 + extension;
     }
+
+    // 이미지 Full URL 반환하는 메소드
+    public String getUrl(String key){
+        if(key == null || key.isBlank()){
+            return null;
+        }
+        // AWS SDK v2의 utilities -> Full URL 생성
+        return s3Client.utilities()
+                .getUrl(builder -> builder.bucket(bucket).key(key))
+                .toExternalForm();
+    }
 }
