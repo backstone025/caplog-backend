@@ -1,5 +1,6 @@
-package com.example.caplog.domain.groups.dto;
+package com.example.caplog.domain.groups.dto.response;
 
+import com.example.caplog.domain.groups.dto.GroupsPageInfo;
 import com.example.caplog.domain.groups.entity.Groups;
 import org.springframework.data.domain.Page;
 

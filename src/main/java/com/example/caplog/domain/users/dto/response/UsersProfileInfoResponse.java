@@ -1,4 +1,4 @@
-package com.example.caplog.domain.users.dto;
+package com.example.caplog.domain.users.dto.response;
 
 import com.example.caplog.domain.users.type.ProfileImage;
 

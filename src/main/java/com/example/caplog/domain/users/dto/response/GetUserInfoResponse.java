@@ -1,6 +1,4 @@
-package com.example.caplog.domain.users.dto;
-
-import com.example.caplog.domain.users.type.ProfileImage;
+package com.example.caplog.domain.users.dto.response;
 
 public record GetUserInfoResponse(
         String userName,            // 사용자 이름

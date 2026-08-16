@@ -1,4 +1,4 @@
-package com.example.caplog.domain.groups.dto;
+package com.example.caplog.domain.groups.dto.response;
 
 import com.example.caplog.domain.groups.type.Category;
 
