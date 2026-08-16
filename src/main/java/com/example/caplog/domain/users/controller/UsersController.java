@@ -51,4 +51,11 @@ public class UsersController {
         UsersProfileInfoResponse response = usersService.updateUserProfileInfo(request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    // #1-5-1 사용자 알림 설정 정보 조회
+    @GetMapping("/settings/alarms")
+    public ResponseEntity<ApiResponse<UsersAlarmConsentResponse>> getUserAlarmsInfo(){
+        UsersAlarmConsentResponse response = usersService.getUsersAlarmConsent();
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 }

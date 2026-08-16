@@ -117,4 +117,20 @@ public class UsersService {
             throw new GeneralException(UsersException.USERS_PROFILE_IMAGE_BAD_REQUEST);
         }
     }
+
+    // #1-5-1 사용자 알림 설정 정보 조회
+    public UsersAlarmConsentResponse getUsersAlarmConsent() {
+        Long userId = authService.getUserId();
+        UsersDetails usersDetails = usersDetailsRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다. id=" + userId));
+
+        boolean totalAlarm;
+        boolean imminentAlarm = usersDetails.isImminentAlarm();
+        boolean unviewedAlarm = usersDetails.isUnviewedAlarm();
+        boolean aiRecommendedAlarm = usersDetails.isAiRecommendedAlarm();
+        // 만일 모든 알림을 받는다고 한다면
+        totalAlarm = imminentAlarm && unviewedAlarm && aiRecommendedAlarm;
+
+        return new UsersAlarmConsentResponse(totalAlarm, imminentAlarm, unviewedAlarm, aiRecommendedAlarm);
+    }
 }
