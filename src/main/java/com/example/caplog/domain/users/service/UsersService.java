@@ -4,7 +4,10 @@ import com.example.caplog.domain.auth.exception.AuthException;
 import com.example.caplog.domain.auth.service.AuthService;
 import com.example.caplog.domain.schedule.repository.ScheduleRepository;
 import com.example.caplog.domain.users.UsersException;
-import com.example.caplog.domain.users.dto.*;
+import com.example.caplog.domain.users.dto.request.UsersAlarmInfoRequest;
+import com.example.caplog.domain.users.dto.request.UsersPhotoConsentRequest;
+import com.example.caplog.domain.users.dto.request.UsersProfileInfoRequest;
+import com.example.caplog.domain.users.dto.response.*;
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.domain.users.entity.UsersDetails;
 import com.example.caplog.domain.users.repository.UsersDetailsRepository;
@@ -31,11 +34,16 @@ public class UsersService {
     private final ScheduleRepository scheduleRepository;
     private final S3Service s3Service;
 
+    // UserDetails를 가져오는 메소드
+    public UsersDetails getUserDetails() {
+        return usersDetailsRepository.findById(authService.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("사용자 상세 정보를 찾을 수 없습니다."));
+    }
+
     // #1-1 로그인한 사용자 정보 조회
     public GetUserInfoResponse getUserInfo() {
         Users user = authService.getCurrentUser();
-        UsersDetails usersDetails = usersDetailsRepository.findById(user.getUsersId())
-                .orElseThrow(() -> new IllegalArgumentException("사용자 상세 정보를 찾을 수 없습니다."));
+        UsersDetails usersDetails = this.getUserDetails();
 
         // 사용자 로그인 아이디
         String username = user.getLoginId();
@@ -59,8 +67,7 @@ public class UsersService {
     // #1-2 사용자 사진 접근 동의 확정
     public UsersPhotoConsentResponse putUsersPhotoConsent(UsersPhotoConsentRequest request) {
         Users user = authService.getCurrentUser();
-        UsersDetails usersDetails = usersDetailsRepository.findById(user.getUsersId())
-                .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다. id=" + user.getUsersId()));
+        UsersDetails usersDetails = this.getUserDetails();
 
         usersDetails.updatePhotoConsent(request.isApproved());
         return new UsersPhotoConsentResponse(usersDetails.isPhotoConsent());
@@ -69,24 +76,21 @@ public class UsersService {
     // #1-3 사용자 사진 접근 동의 확정
     public UsersPhotoConsentResponse getUsersPhotoConsent() {
         Users user = authService.getCurrentUser();
-        UsersDetails usersDetails = usersDetailsRepository.findById(user.getUsersId())
-                .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다. id=" + user.getUsersId()));
+        UsersDetails usersDetails = this.getUserDetails();
         return new UsersPhotoConsentResponse(usersDetails.isPhotoConsent());
     }
 
     // #1-4-1 사용자 프로필 정보 조회
     public UsersProfileInfoResponse getUserProfileInfo() {
         Users user = authService.getCurrentUser();
-        UsersDetails usersDetails = usersDetailsRepository.findById(user.getUsersId())
-                .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다. id=" + user.getUsersId()));
+        UsersDetails usersDetails = this.getUserDetails();
         return new UsersProfileInfoResponse(user.getLoginId(), usersDetails.getProfileImage());
     }
 
     // #1-4-2 사용자 프로필 수정
     public UsersProfileInfoResponse updateUserProfileInfo(UsersProfileInfoRequest request) {
         Users user = authService.getCurrentUser();
-        UsersDetails usersDetails = usersDetailsRepository.findById(user.getUsersId())
-                .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다. id=" + user.getUsersId()));
+        UsersDetails usersDetails = this.getUserDetails();
 
         // 로그인 아이디 업데이트
         String loginId = request.username();
@@ -125,8 +129,7 @@ public class UsersService {
     // #1-5-1 사용자 알림 설정 정보 조회
     public UsersAlarmInfoResponse getUsersAlarmConsent() {
         Long userId = authService.getUserId();
-        UsersDetails usersDetails = usersDetailsRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다. id=" + userId));
+        UsersDetails usersDetails = this.getUserDetails();
 
         boolean totalAlarm;
         boolean imminentAlarm = usersDetails.isImminentAlarm();
@@ -141,8 +144,7 @@ public class UsersService {
     // #1-5-2 사용자 알림 설정
     public UsersAlarmInfoResponse updateUsersAlarmConsent(UsersAlarmInfoRequest request) {
         Long userId = authService.getUserId();
-        UsersDetails usersDetails = usersDetailsRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다. id=" + userId));
+        UsersDetails usersDetails = this.getUserDetails();
 
         boolean totalAlarm;
         boolean imminentAlarm = request.imminentAlarm();

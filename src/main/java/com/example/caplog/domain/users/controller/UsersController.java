@@ -1,6 +1,9 @@
 package com.example.caplog.domain.users.controller;
 
-import com.example.caplog.domain.users.dto.*;
+import com.example.caplog.domain.users.dto.request.UsersAlarmInfoRequest;
+import com.example.caplog.domain.users.dto.request.UsersPhotoConsentRequest;
+import com.example.caplog.domain.users.dto.request.UsersProfileInfoRequest;
+import com.example.caplog.domain.users.dto.response.*;
 import com.example.caplog.domain.users.service.UsersService;
 import com.example.caplog.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
