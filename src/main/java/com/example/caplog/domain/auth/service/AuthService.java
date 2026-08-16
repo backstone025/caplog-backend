@@ -73,7 +73,7 @@ public class AuthService {
         // Users 객체 생성
         Users user = Users.createUsers(request.username(), encodedPassword);
         // UsersDetails 객체 생성
-        UsersDetails usersDetails = UsersDetails.createUsersDetails(user, false);
+        UsersDetails usersDetails = UsersDetails.createUsersDetails(user);
         // DB 저장
         usersRepository.save(user);
         userDetailsRepository.save(usersDetails);
