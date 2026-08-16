@@ -1,14 +1,14 @@
 package com.example.caplog.domain.users.service;
 
+import com.example.caplog.domain.auth.exception.AuthException;
 import com.example.caplog.domain.auth.service.AuthService;
 import com.example.caplog.domain.schedule.repository.ScheduleRepository;
-import com.example.caplog.domain.users.dto.GetUserInfoResponse;
-import com.example.caplog.domain.users.dto.UsersPhotoConsentRequest;
-import com.example.caplog.domain.users.dto.UsersPhotoConsentResponse;
-import com.example.caplog.domain.users.dto.UsersProfileInfoResponse;
+import com.example.caplog.domain.users.UsersException;
+import com.example.caplog.domain.users.dto.*;
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.domain.users.entity.UsersDetails;
 import com.example.caplog.domain.users.repository.UsersDetailsRepository;
+import com.example.caplog.domain.users.type.ProfileImage;
 import com.example.caplog.global.S3.S3Service;
 import com.example.caplog.global.error.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -76,5 +76,45 @@ public class UsersService {
         UsersDetails usersDetails = usersDetailsRepository.findById(user.getUsersId())
                 .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다. id=" + user.getUsersId()));
         return new UsersProfileInfoResponse(user.getLoginId(), usersDetails.getProfileImage());
+    }
+
+    // #1-4-2 사용자 프로필 수정
+    public UsersProfileInfoResponse updateUserProfileInfo(UsersProfileInfoRequest request) {
+        Users user = authService.getCurrentUser();
+        UsersDetails usersDetails = usersDetailsRepository.findById(user.getUsersId())
+                .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다. id=" + user.getUsersId()));
+
+        // 로그인 아이디 업데이트
+        String loginId = request.username();
+        checkUserLoginIdForm(loginId);
+        user.updateLoginId(loginId);
+
+        // 프로필 이미지 업데이트
+        checkUserProfileImageType(request.profileImg());
+        ProfileImage profileImage = ProfileImage.valueOf(request.profileImg());
+        usersDetails.updateProfileImage(profileImage);
+
+        return new UsersProfileInfoResponse(loginId, profileImage);
+    }
+
+    // 로그인 아이디에 대한 검증
+    private void checkUserLoginIdForm(String loginId){
+        // 공백 체크
+        if(loginId == null || loginId.isBlank()){
+            throw new GeneralException(AuthException.LOGIN_ID_BAD_FORM);
+        }
+        // 한글, 영어(대소문자) 20자 이내
+        String regex = "^[a-zA-Z가-힣]{1,20}$";
+
+        if(!loginId.matches(regex)){
+            throw new GeneralException(AuthException.LOGIN_ID_BAD_FORM);
+        }
+    }
+
+    // 프로필 이미지 타입에 대한 검증
+    private void checkUserProfileImageType(String profileImage){
+        if(!ProfileImage.isContain(profileImage)){
+            throw new GeneralException(UsersException.USERS_PROFILE_IMAGE_BAD_REQUEST);
+        }
     }
 }

@@ -1,9 +1,6 @@
 package com.example.caplog.domain.users.controller;
 
-import com.example.caplog.domain.users.dto.GetUserInfoResponse;
-import com.example.caplog.domain.users.dto.UsersPhotoConsentRequest;
-import com.example.caplog.domain.users.dto.UsersPhotoConsentResponse;
-import com.example.caplog.domain.users.dto.UsersProfileInfoResponse;
+import com.example.caplog.domain.users.dto.*;
 import com.example.caplog.domain.users.service.UsersService;
 import com.example.caplog.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +40,15 @@ public class UsersController {
     @GetMapping("/settings/profile")
     public ResponseEntity<ApiResponse<UsersProfileInfoResponse>> getUserProfileInfo(){
         UsersProfileInfoResponse response = usersService.getUserProfileInfo();
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // #1-4-2 사용자 프로필 수정
+    @PostMapping("/settings/profile")
+    public ResponseEntity<ApiResponse<UsersProfileInfoResponse>> updateUserProfileInfo(
+            @RequestBody UsersProfileInfoRequest request
+    ){
+        UsersProfileInfoResponse response = usersService.updateUserProfileInfo(request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

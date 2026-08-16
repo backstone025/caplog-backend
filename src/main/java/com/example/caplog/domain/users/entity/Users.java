@@ -14,14 +14,6 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Users {
-    public static Users createUsers(String username, String password) {
-        Users user = new Users();
-        user.loginId = username;
-        user.password = password;
-        user.createAt = LocalDateTime.now();
-        return user;
-    }
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long usersId;           // 사용자 아이디
@@ -31,4 +23,17 @@ public class Users {
     private String password;        // 비밀번호
 
     private LocalDateTime createAt; // 생성일시
+
+    // 정적 팩토리 메소드
+    public static Users createUsers(String username, String password) {
+        Users user = new Users();
+        user.loginId = username;
+        user.password = password;
+        user.createAt = LocalDateTime.now();
+        return user;
+    }
+
+    public void updateLoginId(String loginId) {
+        this.loginId = loginId;
+    }
 }

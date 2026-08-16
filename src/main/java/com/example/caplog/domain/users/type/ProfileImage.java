@@ -24,4 +24,20 @@ public enum ProfileImage {
         int randomIndex = ThreadLocalRandom.current().nextInt(values.length);
         return values[randomIndex];
     }
+
+    // 해당 타입이 포함되어 있는지 확인하는 로직
+    public static boolean isContain(String profileImageType){
+        // 받은 타입의 문자열의 공백 확인
+        if(profileImageType == null || profileImageType.isBlank()){
+            return false;
+        }
+
+        // 대응되는 타입이 있는지 검사
+        for(ProfileImage profileImage : ProfileImage.values()){
+            if(profileImage.name().equals(profileImageType)){
+                return true;
+            }
+        }
+        return false;
+    }
 }

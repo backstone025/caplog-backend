@@ -40,7 +40,7 @@ public class UsersDetails {
     // users 테이블 관련 날짜
     private LocalDateTime updateAt;     // 사용자 세부 정보 업데이트 일시
 
-    // 생성 메서드
+    // 정적 팩토리 메소드
     public static UsersDetails createUsersDetails(Users user) {
         UsersDetails details = new UsersDetails();
         details.user = user;
@@ -57,5 +57,10 @@ public class UsersDetails {
     // 상태 변경 메서드 (동의 여부 변경)
     public void updatePhotoConsent(boolean photoConsent) {
         this.photoConsent = photoConsent;
+    }
+
+    // 프로필 이미지 변경
+    public void updateProfileImage(ProfileImage profileImage) {
+        this.profileImage = profileImage;
     }
 }
