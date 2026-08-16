@@ -1,6 +1,10 @@
 package com.example.caplog.domain.groups.controller;
 
-import com.example.caplog.domain.groups.dto.*;
+import com.example.caplog.domain.groups.dto.request.GroupsUpdateRequest;
+import com.example.caplog.domain.groups.dto.response.GroupsGetCategoriesResponse;
+import com.example.caplog.domain.groups.dto.response.GroupsGetGroupDetailsResponse;
+import com.example.caplog.domain.groups.dto.response.GroupsGetGroupListResponse;
+import com.example.caplog.domain.groups.dto.response.GroupsUpdateResponse;
 import com.example.caplog.domain.groups.service.GroupsService;
 import com.example.caplog.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
