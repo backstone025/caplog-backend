@@ -17,6 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -155,5 +159,18 @@ public class UsersService {
         );
 
         return new UsersAlarmInfoResponse(totalAlarm, imminentAlarm, unviewedAlarm, aiRecommendedAlarm);
+    }
+
+    // #1-6 프로필 사진 URL 조회
+    public UsersProfileImgUrlListResponse getUserProfileImgUrlList() {
+        List<ProfileImage> profileImages = Arrays.stream(ProfileImage.values()).toList();
+
+        Map<String, String> imageMapper = profileImages.stream()
+                .collect(Collectors.toMap(
+                        Enum::name,
+                        img -> s3Service.getUrl(img.getKey())
+                ));
+
+        return UsersProfileImgUrlListResponse.from(profileImages, imageMapper);
     }
 }
