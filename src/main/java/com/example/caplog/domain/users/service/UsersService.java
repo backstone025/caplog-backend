@@ -11,6 +11,7 @@ import com.example.caplog.domain.users.dto.response.*;
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.domain.users.entity.UsersDetails;
 import com.example.caplog.domain.users.repository.UsersDetailsRepository;
+import com.example.caplog.domain.users.repository.UsersRepository;
 import com.example.caplog.domain.users.type.ProfileImage;
 import com.example.caplog.global.S3.S3Service;
 import com.example.caplog.global.error.exception.GeneralException;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UsersService {
     private final AuthService authService;
+    private final UsersRepository usersRepository;
     private final UsersDetailsRepository usersDetailsRepository;
     private final ScheduleRepository scheduleRepository;
     private final S3Service s3Service;
@@ -38,6 +40,21 @@ public class UsersService {
     public UsersDetails getUserDetails() {
         return usersDetailsRepository.findById(authService.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("사용자 상세 정보를 찾을 수 없습니다."));
+    }
+
+    // 모든 사용자의 세부 정보를 가져오는 메소드
+    public List<UsersDetails> getUsersDetails() {
+        return usersDetailsRepository.findAll();
+    }
+
+    // 잦은 DB 접속 방지를 위해 한번에 Users를 가져오는 메소드
+    public Map<Long, Users> getUsersMap(){
+        return usersRepository.findAll()
+                .stream()
+                .collect(Collectors.toMap(
+                        Users::getUsersId,
+                        user -> user
+                ));
     }
 
     // #1-1 로그인한 사용자 정보 조회
