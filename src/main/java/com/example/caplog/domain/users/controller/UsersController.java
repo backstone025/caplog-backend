@@ -15,12 +15,14 @@ import org.springframework.web.bind.annotation.*;
 public class UsersController {
     private final UsersService usersService;
 
+    // #1-1 로그인한 사용자 정보 조회
     @GetMapping
     public ResponseEntity<ApiResponse<GetUserInfoResponse>>getUserInfo(){
         GetUserInfoResponse response = usersService.getUserInfo();
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    // #1-2 사용자 사진 접근 동의 확정
     @PutMapping("/photo-consent")
     public ResponseEntity<ApiResponse<UsersPhotoConsentResponse>> putPhotoConsent(
             @RequestBody UsersPhotoConsentRequest request
@@ -29,6 +31,7 @@ public class UsersController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    // #1-3 사용자 사진 접근 동의 확정
     @GetMapping("/photo-consent")
     public ResponseEntity<ApiResponse<UsersPhotoConsentResponse>> getPhotoConsent(){
         UsersPhotoConsentResponse response = usersService.getUsersPhotoConsent();
