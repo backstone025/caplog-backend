@@ -3,6 +3,7 @@ package com.example.caplog.domain.users.controller;
 import com.example.caplog.domain.users.dto.GetUserInfoResponse;
 import com.example.caplog.domain.users.dto.UsersPhotoConsentRequest;
 import com.example.caplog.domain.users.dto.UsersPhotoConsentResponse;
+import com.example.caplog.domain.users.dto.UsersProfileInfoResponse;
 import com.example.caplog.domain.users.service.UsersService;
 import com.example.caplog.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,13 @@ public class UsersController {
     @GetMapping("/photo-consent")
     public ResponseEntity<ApiResponse<UsersPhotoConsentResponse>> getPhotoConsent(){
         UsersPhotoConsentResponse response = usersService.getUsersPhotoConsent();
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // #1-4-1 사용자 프로필 정보 조회
+    @GetMapping("/settings/profile")
+    public ResponseEntity<ApiResponse<UsersProfileInfoResponse>> getUserProfileInfo(){
+        UsersProfileInfoResponse response = usersService.getUserProfileInfo();
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

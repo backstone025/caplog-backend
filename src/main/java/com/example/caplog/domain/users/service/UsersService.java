@@ -5,6 +5,7 @@ import com.example.caplog.domain.schedule.repository.ScheduleRepository;
 import com.example.caplog.domain.users.dto.GetUserInfoResponse;
 import com.example.caplog.domain.users.dto.UsersPhotoConsentRequest;
 import com.example.caplog.domain.users.dto.UsersPhotoConsentResponse;
+import com.example.caplog.domain.users.dto.UsersProfileInfoResponse;
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.domain.users.entity.UsersDetails;
 import com.example.caplog.domain.users.repository.UsersDetailsRepository;
@@ -29,14 +30,14 @@ public class UsersService {
     // #1-1 로그인한 사용자 정보 조회
     public GetUserInfoResponse getUserInfo() {
         Users user = authService.getCurrentUser();
-        UsersDetails details = usersDetailsRepository.findById(user.getUsersId())
+        UsersDetails usersDetails = usersDetailsRepository.findById(user.getUsersId())
                 .orElseThrow(() -> new IllegalArgumentException("사용자 상세 정보를 찾을 수 없습니다."));
 
         // 사용자 로그인 아이디
         String username = user.getLoginId();
 
         // 사용자 프로필 이미지 URL
-        String imgUrl = s3Service.getUrl(details.getProfileImage().getKey());
+        String imgUrl = s3Service.getUrl(usersDetails.getProfileImage().getKey());
 
         // 사용자의 전체 일정 개수
         Integer totalSchedule = scheduleRepository.countAllByUser(user);
@@ -67,5 +68,13 @@ public class UsersService {
         UsersDetails usersDetails = usersDetailsRepository.findById(user.getUsersId())
                 .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다. id=" + user.getUsersId()));
         return new UsersPhotoConsentResponse(usersDetails.isPhotoConsent());
+    }
+
+    // #1-4-1 사용자 프로필 정보 조회
+    public UsersProfileInfoResponse getUserProfileInfo() {
+        Users user = authService.getCurrentUser();
+        UsersDetails usersDetails = usersDetailsRepository.findById(user.getUsersId())
+                .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다. id=" + user.getUsersId()));
+        return new UsersProfileInfoResponse(user.getLoginId(), usersDetails.getProfileImage());
     }
 }
