@@ -63,4 +63,11 @@ public class UsersDetails {
     public void updateProfileImage(ProfileImage profileImage) {
         this.profileImage = profileImage;
     }
+
+    // 알림 설정 변경
+    public void updateAlarmInfo(boolean imminentAlarm, boolean unviewedAlarm, boolean aiRecommendedAlarm) {
+        this.imminentAlarm = imminentAlarm;
+        this.unviewedAlarm = unviewedAlarm;
+        this.aiRecommendedAlarm = aiRecommendedAlarm;
+    }
 }

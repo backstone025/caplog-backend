@@ -119,7 +119,7 @@ public class UsersService {
     }
 
     // #1-5-1 사용자 알림 설정 정보 조회
-    public UsersAlarmConsentResponse getUsersAlarmConsent() {
+    public UsersAlarmInfoResponse getUsersAlarmConsent() {
         Long userId = authService.getUserId();
         UsersDetails usersDetails = usersDetailsRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다. id=" + userId));
@@ -131,6 +131,29 @@ public class UsersService {
         // 만일 모든 알림을 받는다고 한다면
         totalAlarm = imminentAlarm && unviewedAlarm && aiRecommendedAlarm;
 
-        return new UsersAlarmConsentResponse(totalAlarm, imminentAlarm, unviewedAlarm, aiRecommendedAlarm);
+        return new UsersAlarmInfoResponse(totalAlarm, imminentAlarm, unviewedAlarm, aiRecommendedAlarm);
+    }
+
+    // #1-5-2 사용자 알림 설정
+    public UsersAlarmInfoResponse updateUsersAlarmConsent(UsersAlarmInfoRequest request) {
+        Long userId = authService.getUserId();
+        UsersDetails usersDetails = usersDetailsRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다. id=" + userId));
+
+        boolean totalAlarm;
+        boolean imminentAlarm = request.imminentAlarm();
+        boolean unviewedAlarm = request.unviewedAlarm();
+        boolean aiRecommendedAlarm = request.aiRecommendedAlarm();
+        // 만일 모든 알림을 받는다고 한다면
+        totalAlarm = imminentAlarm && unviewedAlarm && aiRecommendedAlarm;
+
+        // 상태 변경
+        usersDetails.updateAlarmInfo(
+                imminentAlarm,
+                unviewedAlarm,
+                aiRecommendedAlarm
+        );
+
+        return new UsersAlarmInfoResponse(totalAlarm, imminentAlarm, unviewedAlarm, aiRecommendedAlarm);
     }
 }

@@ -54,8 +54,17 @@ public class UsersController {
 
     // #1-5-1 사용자 알림 설정 정보 조회
     @GetMapping("/settings/alarms")
-    public ResponseEntity<ApiResponse<UsersAlarmConsentResponse>> getUserAlarmsInfo(){
-        UsersAlarmConsentResponse response = usersService.getUsersAlarmConsent();
+    public ResponseEntity<ApiResponse<UsersAlarmInfoResponse>> getUserAlarmsInfo(){
+        UsersAlarmInfoResponse response = usersService.getUsersAlarmConsent();
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // #1-5-2 사용자 알림 설정
+    @PostMapping("/settings/alarms")
+    public ResponseEntity<ApiResponse<UsersAlarmInfoResponse>> updateUserAlarmsInfo(
+            @RequestBody UsersAlarmInfoRequest request
+    ){
+        UsersAlarmInfoResponse response = usersService.updateUsersAlarmConsent(request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
