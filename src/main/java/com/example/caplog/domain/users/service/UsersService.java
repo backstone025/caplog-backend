@@ -192,4 +192,10 @@ public class UsersService {
 
         return UsersProfileImgUrlListResponse.from(profileImages, imageMapper);
     }
+
+    // #1-7 FCM 토큰 갱신 메서드
+    public void updateFcmToken(String fcmToken) {
+        UsersDetails usersDetails = this.getUserDetails();
+        usersDetails.updateFcmToken(fcmToken); // Dirty Checking으로 자동 DB 반영
+    }
 }

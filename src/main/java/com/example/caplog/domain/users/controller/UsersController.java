@@ -1,11 +1,13 @@
 package com.example.caplog.domain.users.controller;
 
+import com.example.caplog.domain.users.dto.request.FcmTokenRequest;
 import com.example.caplog.domain.users.dto.request.UsersAlarmInfoRequest;
 import com.example.caplog.domain.users.dto.request.UsersPhotoConsentRequest;
 import com.example.caplog.domain.users.dto.request.UsersProfileInfoRequest;
 import com.example.caplog.domain.users.dto.response.*;
 import com.example.caplog.domain.users.service.UsersService;
 import com.example.caplog.global.response.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -76,5 +78,12 @@ public class UsersController {
     public ResponseEntity<ApiResponse<UsersProfileImgUrlListResponse>> getUserProfileImgUrlList() {
         UsersProfileImgUrlListResponse response = usersService.getUserProfileImgUrlList();
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // #1-7 FCM 토큰 갱신(앱 전용)
+    @PostMapping("/fcm-token")
+    public ResponseEntity<ApiResponse<Void>> updateFcmToken(@Valid @RequestBody FcmTokenRequest request) {
+        usersService.updateFcmToken(request.fcmToken());
+        return ResponseEntity.ok(ApiResponse.success());
     }
 }

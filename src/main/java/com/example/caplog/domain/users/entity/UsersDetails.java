@@ -50,6 +50,7 @@ public class UsersDetails {
         details.profileImage = ProfileImage.randomSet();
         details.photoConsent = false;
         details.alarmConsent = false;
+        details.fcmToken = null;
         details.imminentAlarm = true;
         details.unviewedAlarm = true;
         details.aiRecommendedAlarm = true;
@@ -72,5 +73,11 @@ public class UsersDetails {
         this.imminentAlarm = imminentAlarm;
         this.unviewedAlarm = unviewedAlarm;
         this.aiRecommendedAlarm = aiRecommendedAlarm;
+    }
+
+    // FCM 토큰 갱신 메서드 (로그인 / 토큰 변경 시 사용)
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+        this.updateAt = LocalDateTime.now();
     }
 }
