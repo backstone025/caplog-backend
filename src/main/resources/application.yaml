@@ -18,5 +18,5 @@ spring:
       qdrant:
         host: ${QDRANT_HOST:localhost}
         port: ${QDRANT_PORT:6334}
-        collection-name: user_schedules
+        collection-name: user_groups
         initialize-schema: true

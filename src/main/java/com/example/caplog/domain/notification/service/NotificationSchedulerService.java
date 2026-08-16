@@ -15,6 +15,7 @@ import com.example.caplog.domain.users.service.UsersService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,21 +43,32 @@ public class NotificationSchedulerService {
     @Scheduled(cron = "0 0 9 * * *")
     @Transactional
     public void generateNotifications() {
+        log.info("[알림 배치 스케줄러] 알림 생성 작업을 시작합니다.");
+
         List<UsersDetails> usersDetails = usersService.getUsersDetails();
         Map<Long, Users> usersMap = usersService.getUsersMap();
+
+        log.info("[알림 배치 스케줄러] 총 {}명의 사용자 설정을 조회했습니다.", usersDetails.size());
+
+        int processedUserCount = 0;
 
         for (UsersDetails usersDetail : usersDetails) {
             Users user = usersMap.get(usersDetail.getUserId());
             // 사용자 조회 불가 & 알림 수신 동의 꺼져있을 경우
             if (user == null || !usersDetail.isAlarmConsent()) {
+                log.debug("[알림 배치 스케줄러] Skip - 사용자 없음 또는 수신동의 OFF (userId: {})", usersDetail.getUserId());
                 continue;
             }
+
+            processedUserCount++;
+            log.info("[알림 배치 스케줄러] 사용자 처리 시작 (userId: {}, loginId: {})", user.getUsersId(), user.getLoginId());
 
             // 1. 임박한 알림 생성
             if (usersDetail.isImminentAlarm()) {
                 List<Notification> imminentNotifications = createImminentNotifications(user, usersDetail);
                 notificationRepository.saveAll(imminentNotifications);
                 sendMessageToUser(NotificationType.IMMINENT, user);
+                log.info("[IMMINENT 알림] 저장 완료 (userId: {}, 건수: {})", user.getUsersId(), imminentNotifications.size());
             }
 
             // 2. 미확인 알림 생성
@@ -64,6 +76,7 @@ public class NotificationSchedulerService {
                 List<Notification> unviewedNotifications = createUnviewedNotifications(user, usersDetail);
                 notificationRepository.saveAll(unviewedNotifications);
                 sendMessageToUser(NotificationType.UNVIEWED, user);
+                log.info("[UNVIEWED 알림] 저장 완료 (userId: {}, 건수: {})", user.getUsersId(), unviewedNotifications.size());
             }
 
             // 3. AI 추천 알림 생성
@@ -72,10 +85,13 @@ public class NotificationSchedulerService {
                 if(aiRecommendedNotification != null){
                     notificationRepository.save(aiRecommendedNotification);
                     sendMessageToUser(NotificationType.AI_RECOMMENDED, user);
+                    log.info("[AI_RECOMMENDED 알림] 저장 완료 (userId: {})", user.getUsersId());
                 }
 
             }
         }
+
+        log.info("[알림 배치 스케줄러] 알림 생성 작업 종료 (대상 사용자: {}/{}명)", processedUserCount, usersDetails.size());
     }
 
     // 1. IMMINENT (임박한 알림) 생성 로직
@@ -98,7 +114,12 @@ public class NotificationSchedulerService {
             long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), event.getStartAt().toLocalDate());
 
             String title = "얼마 남지 않는 일정";
-            String content = String.format("[%s]이 [%d]일 남았어요!", event.getTitle(), daysLeft);
+            String content;
+            if (daysLeft == 0) {
+                content = String.format("'%s'이 오늘 예정되어 있어요!", event.getTitle());
+            } else {
+                content = String.format("'%s'이 %d일 남았어요!", event.getTitle(), daysLeft);
+            }
 
             Notification notification = Notification.createNotification(
                     user,
@@ -119,8 +140,10 @@ public class NotificationSchedulerService {
 
         List<Schedule> unviewedSchedules = scheduleRepository.findUnviewedSchedulesByUser(
                 user,
-                thresholdDate
+                thresholdDate,
+                PageRequest.of(0, 5)        // 최대 5개 가져오도록 설정
         );
+
         List<Notification> unviewedNotifications = new ArrayList<>();
 
         for (Schedule schedule : unviewedSchedules) {
@@ -162,7 +185,7 @@ public class NotificationSchedulerService {
                 Schedule schedule = schedules.get(randomIndex);
 
                 String aiComment = aiAlarmService.generateRecommendationMessage(schedule);
-                String title = "한 번도 열람하지 않는 정보";
+                String title = "AI 추천";
                 String content = String.format("%s", aiComment);
 
                 return Notification.createNotification(
@@ -180,6 +203,7 @@ public class NotificationSchedulerService {
 
     // FCM 발송
     private void sendMessageToUser(NotificationType notificationType, Users user) {
+        log.debug("[FCM 발송 대기] type: {}, targetUser: {}", notificationType, user.getLoginId());
         // FCM 토큰 조회 및 알림 발송 전담 로직 구현 공간
     }
 }

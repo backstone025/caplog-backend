@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface ScheduleRepository extends JpaRepository<Schedule,Long> {
+public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     Page<Schedule> findByGroups(Groups groups, Pageable pageable);
 
     // 특정 그룹의 일정 목록 조회 (JPQL)
@@ -23,25 +23,25 @@ public interface ScheduleRepository extends JpaRepository<Schedule,Long> {
 
     // 특정 사용자의 전체 일정 개수
     @Query("""
-           SELECT COUNT(s)
-           FROM Schedule s
-           WHERE s.groups.user = :user
-           """)
+            SELECT COUNT(s)
+            FROM Schedule s
+            WHERE s.groups.user = :user
+            """)
     Integer countAllByUser(@Param("user") Users user);
 
     // 특정 사용자의 특정 기간 내 생성된 일정 개수
     @Query("""
-           SELECT COUNT(s)
-           FROM Schedule s
-           WHERE s.groups.user = :user
-           AND s.createdAt >= :startDate
-           AND s.createdAt <= :endDate
-           """)
+            SELECT COUNT(s)
+            FROM Schedule s
+            WHERE s.groups.user = :user
+            AND s.createdAt >= :startDate
+            AND s.createdAt <= :endDate
+            """)
     Integer countByUserAndCreatedAtBetween(
             @Param("user") Users user,
-            @Param("startDate")LocalDateTime startDate,
-            @Param("endDate")LocalDateTime endDate
-            );
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 
     // 특정 사용자의 미확인 일정 조회(viewedAt IS NULL)
     @Query("""
@@ -55,5 +55,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule,Long> {
             """)
     List<Schedule> findUnviewedSchedulesByUser(
             @Param("user") Users user,
-            @Param("thresholdDate") LocalDateTime thresholdDate);
+            @Param("thresholdDate") LocalDateTime thresholdDate,
+            Pageable pageable
+    );
 }
