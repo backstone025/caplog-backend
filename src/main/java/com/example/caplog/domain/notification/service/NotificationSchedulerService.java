@@ -38,6 +38,7 @@ public class NotificationSchedulerService {
     private final NotificationRepository notificationRepository;
     private final VectorService vectorService;
     private final AiAlarmService aiAlarmService;
+    private final FcmService fcmService;
 
     // 매일 오전 9시마다 실행되는 통합 알림 생성(batch)
     @Scheduled(cron = "0 0 9 * * *")
@@ -65,26 +66,35 @@ public class NotificationSchedulerService {
 
             // 1. 임박한 알림 생성
             if (usersDetail.isImminentAlarm()) {
-                List<Notification> imminentNotifications = createImminentNotifications(user, usersDetail);
+                List<Notification> imminentNotifications = createImminentNotifications(user);
                 notificationRepository.saveAll(imminentNotifications);
-                sendMessageToUser(NotificationType.IMMINENT, user);
+                imminentNotifications.forEach(n-> {
+                    sendMessageToUser(NotificationType.IMMINENT, usersDetail, n.getTitle(), n.getContent());
+                });
+
                 log.info("[IMMINENT 알림] 저장 완료 (userId: {}, 건수: {})", user.getUsersId(), imminentNotifications.size());
             }
 
             // 2. 미확인 알림 생성
             if (usersDetail.isUnviewedAlarm()) {
-                List<Notification> unviewedNotifications = createUnviewedNotifications(user, usersDetail);
+                List<Notification> unviewedNotifications = createUnviewedNotifications(user);
                 notificationRepository.saveAll(unviewedNotifications);
-                sendMessageToUser(NotificationType.UNVIEWED, user);
+                unviewedNotifications.forEach(n -> {
+                    sendMessageToUser(NotificationType.UNVIEWED, usersDetail, n.getTitle(), n.getContent());
+                });
                 log.info("[UNVIEWED 알림] 저장 완료 (userId: {}, 건수: {})", user.getUsersId(), unviewedNotifications.size());
             }
 
             // 3. AI 추천 알림 생성
             if (usersDetail.isAiRecommendedAlarm()) {
-                Notification aiRecommendedNotification = createAiRecommendedNotifications(user, usersDetail);
+                Notification aiRecommendedNotification = createAiRecommendedNotifications(user);
                 if(aiRecommendedNotification != null){
                     notificationRepository.save(aiRecommendedNotification);
-                    sendMessageToUser(NotificationType.AI_RECOMMENDED, user);
+                    sendMessageToUser(
+                            NotificationType.AI_RECOMMENDED,
+                            usersDetail,
+                            aiRecommendedNotification.getTitle(),
+                            aiRecommendedNotification.getContent());
                     log.info("[AI_RECOMMENDED 알림] 저장 완료 (userId: {})", user.getUsersId());
                 }
 
@@ -95,7 +105,7 @@ public class NotificationSchedulerService {
     }
 
     // 1. IMMINENT (임박한 알림) 생성 로직
-    private List<Notification> createImminentNotifications(Users user, UsersDetails usersDetails) {
+    private List<Notification> createImminentNotifications(Users user) {
         LocalDateTime startDay = LocalDateTime.now();
         LocalDateTime endDay = startDay.plusDays(3);    // 3일 간격으로 조회
 
@@ -135,7 +145,7 @@ public class NotificationSchedulerService {
     }
 
     // 2. UNVIEWED (미확인 알림) 생성 로직
-    private List<Notification> createUnviewedNotifications(Users user, UsersDetails usersDetails) {
+    private List<Notification> createUnviewedNotifications(Users user) {
         LocalDateTime thresholdDate = LocalDateTime.now().minusDays(7); // 1주일 동안 확인하지 않는 일정에 대한 탐색 범위 설정
 
         List<Schedule> unviewedSchedules = scheduleRepository.findUnviewedSchedulesByUser(
@@ -165,7 +175,7 @@ public class NotificationSchedulerService {
     }
 
     // 3. AI_RECOMMENDED (AI 추천 알림) 생성 로직
-    private Notification createAiRecommendedNotifications(Users user, UsersDetails usersDetails) {
+    private Notification createAiRecommendedNotifications(Users user) {
         String randomKeyword = aiAlarmService.getRandomKeyword();
         List<Document> userGroups = vectorService.searchGroupsVector(user.getUsersId(), randomKeyword);
 
@@ -202,8 +212,15 @@ public class NotificationSchedulerService {
     }
 
     // FCM 발송
-    private void sendMessageToUser(NotificationType notificationType, Users user) {
-        log.debug("[FCM 발송 대기] type: {}, targetUser: {}", notificationType, user.getLoginId());
-        // FCM 토큰 조회 및 알림 발송 전담 로직 구현 공간
+    private void sendMessageToUser(NotificationType notificationType, UsersDetails usersDetails, String title, String content) {
+        log.debug("[FCM 발송 시도] type: {}, targetUserId: {}", notificationType, usersDetails.getUserId());
+
+        String fcmToken = usersDetails.getFcmToken();
+
+        if (fcmToken != null && !fcmToken.isBlank()) {
+            fcmService.sendMessageTo(fcmToken, title, content);
+        }else {
+            log.warn("[FCM 스킵] FCM 토큰이 없습니다 - userId: {}", usersDetails.getUserId());
+        }
     }
 }

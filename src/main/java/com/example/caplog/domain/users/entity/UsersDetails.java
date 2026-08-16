@@ -30,6 +30,9 @@ public class UsersDetails {
 
     private boolean alarmConsent;       // 알림 동의 여부
 
+    // FCM Token
+    private String fcmToken;
+
     // 알림 설정
     private boolean imminentAlarm;      // 암박한 알림 허용 여부
 
