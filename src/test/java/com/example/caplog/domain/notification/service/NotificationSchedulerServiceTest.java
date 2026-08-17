@@ -51,7 +51,7 @@ class NotificationSchedulerServiceTest {
         ReflectionTestUtils.setField(details, "userId", 1L);
         ReflectionTestUtils.setField(details, "alarmConsent", false); // 수신 거부
 
-        given(usersService.getUsersDetails()).willReturn(List.of(details));
+        given(usersService.getAllUsersDetails()).willReturn(List.of(details));
         given(usersService.getUsersMap()).willReturn(Map.of(1L, user));
 
         // when

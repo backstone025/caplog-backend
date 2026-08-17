@@ -3,15 +3,18 @@ package com.example.caplog.domain.notification.service;
 import com.example.caplog.domain.auth.service.AuthService;
 import com.example.caplog.domain.event.entity.Event;
 import com.example.caplog.domain.event.repository.EventRepository;
-import com.example.caplog.domain.groups.exception.GroupsException;
 import com.example.caplog.domain.images.service.ImagesService;
-import com.example.caplog.domain.notification.dto.NotificationGetAlarmListResponse;
+import com.example.caplog.domain.notification.dto.request.NotificationAlarmConsentRequest;
+import com.example.caplog.domain.notification.dto.response.NotificationAlarmConsentResponse;
+import com.example.caplog.domain.notification.dto.response.NotificationGetAlarmListResponse;
 import com.example.caplog.domain.notification.entity.Notification;
 import com.example.caplog.domain.notification.exception.NotificationException;
 import com.example.caplog.domain.notification.repository.NotificationRepository;
 import com.example.caplog.domain.notification.type.NotificationType;
 import com.example.caplog.domain.schedule.entity.Schedule;
 import com.example.caplog.domain.users.entity.Users;
+import com.example.caplog.domain.users.entity.UsersDetails;
+import com.example.caplog.domain.users.service.UsersService;
 import com.example.caplog.global.error.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +27,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -36,6 +42,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final EventRepository eventRepository;
     private final ImagesService imagesService;
+    private final UsersService usersService;
 
     // #9-1 이벤트 알림 목록 조회
     public NotificationGetAlarmListResponse getAlarmList(Integer page, NotificationType type) {
@@ -126,7 +133,7 @@ public class NotificationService {
         }
     }
 
-    private void checkPageRange(Page<?> notificationPage){
+    private void checkPageRange(Page<?> notificationPage) {
         int page = notificationPage.getNumber();
         int totalPages = notificationPage.getTotalPages();
 
@@ -136,5 +143,13 @@ public class NotificationService {
         if (page < 0 || (totalPages == 0 && page > 0) || (totalPages > 0 && page >= totalPages)) {
             throw new GeneralException(NotificationException.NOTIFICATION_PAGE_BAD_RANGE);
         }
+    }
+
+    // #9-2 사용자 알림 동의 확정
+    public NotificationAlarmConsentResponse updateAlarmConsent(NotificationAlarmConsentRequest request) {
+        UsersDetails usersDetails = usersService.getUsersDetails();
+
+        usersDetails.updateAlarmConsent(request.isApproved());
+        return new NotificationAlarmConsentResponse(request.isApproved());
     }
 }

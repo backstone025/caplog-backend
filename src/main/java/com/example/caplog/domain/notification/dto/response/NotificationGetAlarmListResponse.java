@@ -1,5 +1,6 @@
-package com.example.caplog.domain.notification.dto;
+package com.example.caplog.domain.notification.dto.response;
 
+import com.example.caplog.domain.notification.dto.NotificationPageInfo;
 import com.example.caplog.domain.notification.entity.Notification;
 import com.example.caplog.domain.notification.type.NotificationType;
 import org.springframework.data.domain.Page;

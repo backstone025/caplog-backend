@@ -46,7 +46,7 @@ public class NotificationSchedulerService {
     public void generateNotifications() {
         log.info("[알림 배치 스케줄러] 알림 생성 작업을 시작합니다.");
 
-        List<UsersDetails> usersDetails = usersService.getUsersDetails();
+        List<UsersDetails> usersDetails = usersService.getAllUsersDetails();
         Map<Long, Users> usersMap = usersService.getUsersMap();
 
         log.info("[알림 배치 스케줄러] 총 {}명의 사용자 설정을 조회했습니다.", usersDetails.size());

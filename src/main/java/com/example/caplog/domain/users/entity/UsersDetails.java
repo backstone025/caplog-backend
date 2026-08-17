@@ -63,6 +63,10 @@ public class UsersDetails {
         this.photoConsent = photoConsent;
     }
 
+    public void updateAlarmConsent(boolean alarmConsent) {
+        this.alarmConsent = alarmConsent;
+    }
+
     // 프로필 이미지 변경
     public void updateProfileImage(ProfileImage profileImage) {
         this.profileImage = profileImage;

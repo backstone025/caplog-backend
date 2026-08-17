@@ -36,19 +36,19 @@ public class UsersService {
     private final ScheduleRepository scheduleRepository;
     private final S3Service s3Service;
 
-    // UserDetails를 가져오는 메소드
-    public UsersDetails getUserDetails() {
+    // 현재 로그인한 사용자의 UserDetails를 가져오는 메소드
+    public UsersDetails getUsersDetails() {
         return usersDetailsRepository.findById(authService.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("사용자 상세 정보를 찾을 수 없습니다."));
     }
 
     // 모든 사용자의 세부 정보를 가져오는 메소드
-    public List<UsersDetails> getUsersDetails() {
+    public List<UsersDetails> getAllUsersDetails() {
         return usersDetailsRepository.findAll();
     }
 
     // 잦은 DB 접속 방지를 위해 한번에 Users를 가져오는 메소드
-    public Map<Long, Users> getUsersMap(){
+    public Map<Long, Users> getUsersMap() {
         return usersRepository.findAll()
                 .stream()
                 .collect(Collectors.toMap(
@@ -60,7 +60,7 @@ public class UsersService {
     // #1-1 로그인한 사용자 정보 조회
     public GetUserInfoResponse getUserInfo() {
         Users user = authService.getCurrentUser();
-        UsersDetails usersDetails = this.getUserDetails();
+        UsersDetails usersDetails = this.getUsersDetails();
 
         // 사용자 로그인 아이디
         String username = user.getLoginId();
@@ -83,8 +83,7 @@ public class UsersService {
 
     // #1-2 사용자 사진 접근 동의 확정
     public UsersPhotoConsentResponse putUsersPhotoConsent(UsersPhotoConsentRequest request) {
-        Users user = authService.getCurrentUser();
-        UsersDetails usersDetails = this.getUserDetails();
+        UsersDetails usersDetails = this.getUsersDetails();
 
         usersDetails.updatePhotoConsent(request.isApproved());
         return new UsersPhotoConsentResponse(usersDetails.isPhotoConsent());
@@ -92,22 +91,21 @@ public class UsersService {
 
     // #1-3 사용자 사진 접근 동의 확정
     public UsersPhotoConsentResponse getUsersPhotoConsent() {
-        Users user = authService.getCurrentUser();
-        UsersDetails usersDetails = this.getUserDetails();
+        UsersDetails usersDetails = this.getUsersDetails();
         return new UsersPhotoConsentResponse(usersDetails.isPhotoConsent());
     }
 
     // #1-4-1 사용자 프로필 정보 조회
     public UsersProfileInfoResponse getUserProfileInfo() {
         Users user = authService.getCurrentUser();
-        UsersDetails usersDetails = this.getUserDetails();
+        UsersDetails usersDetails = this.getUsersDetails();
         return new UsersProfileInfoResponse(user.getLoginId(), usersDetails.getProfileImage());
     }
 
     // #1-4-2 사용자 프로필 수정
     public UsersProfileInfoResponse updateUserProfileInfo(UsersProfileInfoRequest request) {
         Users user = authService.getCurrentUser();
-        UsersDetails usersDetails = this.getUserDetails();
+        UsersDetails usersDetails = this.getUsersDetails();
 
         // 로그인 아이디 업데이트
         String loginId = request.username();
@@ -123,30 +121,29 @@ public class UsersService {
     }
 
     // 로그인 아이디에 대한 검증
-    private void checkUserLoginIdForm(String loginId){
+    private void checkUserLoginIdForm(String loginId) {
         // 공백 체크
-        if(loginId == null || loginId.isBlank()){
+        if (loginId == null || loginId.isBlank()) {
             throw new GeneralException(AuthException.LOGIN_ID_BAD_FORM);
         }
         // 한글, 영어(대소문자) 20자 이내
         String regex = "^[a-zA-Z가-힣]{1,20}$";
 
-        if(!loginId.matches(regex)){
+        if (!loginId.matches(regex)) {
             throw new GeneralException(AuthException.LOGIN_ID_BAD_FORM);
         }
     }
 
     // 프로필 이미지 타입에 대한 검증
-    private void checkUserProfileImageType(String profileImage){
-        if(!ProfileImage.isContain(profileImage)){
+    private void checkUserProfileImageType(String profileImage) {
+        if (!ProfileImage.isContain(profileImage)) {
             throw new GeneralException(UsersException.USERS_PROFILE_IMAGE_BAD_REQUEST);
         }
     }
 
     // #1-5-1 사용자 알림 설정 정보 조회
     public UsersAlarmInfoResponse getUsersAlarmConsent() {
-        Long userId = authService.getUserId();
-        UsersDetails usersDetails = this.getUserDetails();
+        UsersDetails usersDetails = this.getUsersDetails();
 
         boolean totalAlarm;
         boolean imminentAlarm = usersDetails.isImminentAlarm();
@@ -160,8 +157,7 @@ public class UsersService {
 
     // #1-5-2 사용자 알림 설정
     public UsersAlarmInfoResponse updateUsersAlarmConsent(UsersAlarmInfoRequest request) {
-        Long userId = authService.getUserId();
-        UsersDetails usersDetails = this.getUserDetails();
+        UsersDetails usersDetails = this.getUsersDetails();
 
         boolean totalAlarm;
         boolean imminentAlarm = request.imminentAlarm();
@@ -195,7 +191,7 @@ public class UsersService {
 
     // #1-7 FCM 토큰 갱신 메서드
     public void updateFcmToken(String fcmToken) {
-        UsersDetails usersDetails = this.getUserDetails();
+        UsersDetails usersDetails = this.getUsersDetails();
         usersDetails.updateFcmToken(fcmToken); // Dirty Checking으로 자동 DB 반영
     }
 }
