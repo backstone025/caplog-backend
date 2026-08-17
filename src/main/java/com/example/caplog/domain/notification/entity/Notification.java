@@ -7,8 +7,6 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDateTime;
@@ -23,7 +21,7 @@ public class Notification {
 
     @JoinColumn(name = "users_id")
     @ManyToOne(fetch = FetchType.LAZY)
-    private Users users;                // 사용자
+    private Users user;                // 사용자
 
     @JoinColumn(name = "schedule_id")
     @ManyToOne(fetch = FetchType.LAZY)
@@ -43,14 +41,14 @@ public class Notification {
 
     // 정적 팩토리 메소드
     public static Notification createNotification(
-            Users users,
+            Users user,
             Schedule schedule,
             NotificationType type,
             String title,
             String content,
             Boolean isRead) {
         Notification notification = new Notification();
-        notification.users = users;
+        notification.user = user;
         notification.schedule = schedule;
         notification.type = type;
         notification.title = title;

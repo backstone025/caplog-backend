@@ -10,9 +10,25 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
+    List<Event> findBySchedule(Schedule schedule);
+
+    // 단건 Schedule에 대한 첫 번째 Event 및 Images Fetch Join
+    @Query("""
+            SELECT e 
+            FROM Event e LEFT JOIN FETCH e.images
+            WHERE e.schedule = :schedule
+                AND e.eventId = (
+                    SELECT MIN(e2.eventId)
+                    FROM Event e2
+                    WHERE e2.schedule = e.schedule
+                )
+            """)
+    Optional<Event> findFirstEventWithImageBySchedule(@Param("schedule") Schedule schedule);
+
     // 각 일정별 첫 번째 Event와 Images를 한 번에 가져오는 Fetch Join 쿼리(N+1 문제 방지)
     @Query("""
             SELECT e 
