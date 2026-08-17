@@ -1,6 +1,7 @@
 package com.example.caplog.domain.schedule.repository;
 
 import com.example.caplog.domain.groups.entity.Groups;
+import com.example.caplog.domain.groups.type.Category;
 import com.example.caplog.domain.schedule.entity.Schedule;
 import com.example.caplog.domain.users.entity.Users;
 import org.springframework.data.domain.Page;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
+    // 특정 그룹 내부 일정 페이징 조회
     Page<Schedule> findByGroups(Groups groups, Pageable pageable);
 
     // 특정 그룹의 일정 목록 조회 (JPQL)
@@ -25,7 +27,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     @Query("""
             SELECT COUNT(s)
             FROM Schedule s
-            WHERE s.groups.user = :user
+            WHERE s.user = :user
             """)
     Integer countAllByUser(@Param("user") Users user);
 
@@ -33,7 +35,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     @Query("""
             SELECT COUNT(s)
             FROM Schedule s
-            WHERE s.groups.user = :user
+            WHERE s.user = :user
             AND s.createdAt >= :startDate
             AND s.createdAt <= :endDate
             """)
@@ -47,15 +49,53 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     @Query("""
             SELECT s
             FROM Schedule s
-            JOIN FETCH s.groups g
-            WHERE g.user = :user
-            AND s.viewedAt IS NULL
+            WHERE s.user = :user
+            AND (
+                s.viewedAt IS NULL
+                OR s.updatedAt > s.viewedAt
+            )
             AND s.createdAt <= :thresholdDate
-            ORDER BY s.createdAt DESC
+            ORDER BY s.updatedAt DESC
             """)
     List<Schedule> findUnviewedSchedulesByUser(
             @Param("user") Users user,
             @Param("thresholdDate") LocalDateTime thresholdDate,
             Pageable pageable
+    );
+
+    // TOTAL + 검색어
+    @Query("""
+            SELECT s
+            FROM Schedule s
+            WHERE s.user = :user
+            AND s.groups IS NULL
+            AND (
+                :searchWords = ''
+                OR LOWER(s.title) LIKE LOWER(CONCAT('%', :searchWords, '%'))
+                OR LOWER(COALESCE(s.aiSummary, '')) LIKE LOWER(CONCAT('%', :searchWords, '%'))
+            )
+            """)
+    List<Schedule> findSingleSchedules(
+            @Param("user") Users user,
+            @Param("searchWords") String searchWords
+    );
+
+    // 카테고리 + 검색어
+    @Query("""
+            SELECT s
+            FROM Schedule s
+            WHERE s.user = :user
+            AND s.groups IS NULL
+            AND s.category = :category
+            AND (
+                :searchWords = ''
+                OR LOWER(s.title) LIKE LOWER(CONCAT('%', :searchWords, '%'))
+                OR LOWER(COALESCE(s.aiSummary, '')) LIKE LOWER(CONCAT('%', :searchWords, '%'))
+            )
+            """)
+    List<Schedule> findSingleSchedulesByCategory(
+            @Param("user") Users user,
+            @Param("category") Category category,
+            @Param("searchWords") String searchWords
     );
 }
