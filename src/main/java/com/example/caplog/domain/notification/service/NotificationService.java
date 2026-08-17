@@ -158,4 +158,10 @@ public class NotificationService {
         UsersDetails usersDetails = usersService.getUsersDetails();
         return new NotificationAlarmConsentResponse(usersDetails.isAlarmConsent());
     }
+
+    // #9-4 사용자 알림 조회 열람 상태 확인으로 설정
+    public void markAlarmAsRead(Long alarmId) {
+        Notification notification = notificationRepository.findById(alarmId).orElseThrow();
+        notification.markAsRead();
+    }
 }

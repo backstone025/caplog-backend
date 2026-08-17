@@ -17,6 +17,7 @@ public record NotificationGetAlarmListResponse(
     private record NotificationElement(
             Long alarmId,                           // 알림 ID
             Long scheduleId,                        // 연관 일정 ID
+            boolean isOpened,                       // 열람 여부
             String title,                           // 알림 제목
             Long Dday,                              // 남일 날
             NotificationType alarmType,             // 알림 타입
@@ -45,6 +46,7 @@ public record NotificationGetAlarmListResponse(
                 .map(n -> new NotificationElement(
                         n.getNotificationId(),
                         n.getSchedule().getScheduleId(),
+                        n.getIsRead(),
                         n.getTitle(),
                         dDayMapper.get(n.getNotificationId()),
                         n.getType(),

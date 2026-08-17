@@ -41,4 +41,13 @@ public class NotificationController {
         NotificationAlarmConsentResponse response = notificationService.getAlarmConsent();
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    // #9-4 사용자 알림 조회 열람 상태 확인으로 설정
+    @GetMapping("/open/{alarmId}")
+    public ResponseEntity<ApiResponse<Void>> markAlarmAsRead(
+            @PathVariable Long alarmId
+    ){
+        notificationService.markAlarmAsRead(alarmId);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
 }
