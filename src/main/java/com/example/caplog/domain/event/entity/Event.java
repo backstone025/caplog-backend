@@ -15,6 +15,27 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Event {
+    public static Event createEvent(
+            Schedule schedule,
+            Images image,
+            String title,
+            String location,
+            String details,
+            LocalDateTime startAt,
+            LocalDateTime endAt
+    ) {
+        Event event = new Event();
+
+        event.schedule = schedule;
+        event.images = image;
+        event.title = title;
+        event.location = location;
+        event.details = details;
+        event.startAt = startAt;
+        event.endAt = endAt;
+
+        return event;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

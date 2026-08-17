@@ -2,6 +2,7 @@ package com.example.caplog.domain.images.controller;
 
 import com.example.caplog.domain.ai.chat.dto.response.AiChatResponse;
 import com.example.caplog.domain.auth.service.AuthService;
+import com.example.caplog.domain.images.dto.request.UploadConfirmRequest;
 import com.example.caplog.domain.images.service.ImagesService;
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.global.response.ApiResponse;
@@ -30,6 +31,18 @@ public class ImagesController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(result)
+        );
+    }
+    @PostMapping("/confirm")
+    public ResponseEntity<ApiResponse<Long>> confirmUpload(
+            @RequestBody UploadConfirmRequest request
+    ) {
+
+        Long scheduleId =
+                imagesService.confirmUpload(request);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(scheduleId)
         );
     }
 }
