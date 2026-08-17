@@ -1,9 +1,9 @@
 package com.example.caplog.domain.images.controller;
 
-import com.example.caplog.domain.images.entity.Images;
+import com.example.caplog.domain.ai.chat.dto.response.AiChatResponse;
+import com.example.caplog.domain.auth.service.AuthService;
 import com.example.caplog.domain.images.service.ImagesService;
 import com.example.caplog.domain.users.entity.Users;
-import com.example.caplog.domain.auth.service.AuthService;
 import com.example.caplog.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,24 +19,17 @@ public class ImagesController {
     private final AuthService authService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Long>> uploadImage(
+    public ResponseEntity<ApiResponse<AiChatResponse>> uploadImage(
             @RequestPart("image") MultipartFile image
     ) {
 
-        // 1. 현재 로그인 사용자 조회
         Users user = authService.getCurrentUser();
 
-        // 2. S3 업로드 + Images DB 저장
-        Images savedImage = imagesService.upload(
-                image,
-                user
-        );
+        AiChatResponse result =
+                imagesService.upload(image, user);
 
-        // 3. 저장된 imageId 반환
         return ResponseEntity.ok(
-                ApiResponse.success(
-                        savedImage.getImageId()
-                )
+                ApiResponse.success(result)
         );
     }
 }

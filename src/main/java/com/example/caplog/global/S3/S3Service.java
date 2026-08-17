@@ -11,7 +11,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
-
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -140,4 +140,23 @@ public class S3Service {
                 .getUrl(builder -> builder.bucket(bucket).key(key))
                 .toExternalForm();
     }
+
+    public byte[] download(String key) {
+
+        try {
+            GetObjectRequest request = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build();
+
+            return s3Client
+                    .getObjectAsBytes(request)
+                    .asByteArray();
+
+        } catch (Exception e) {
+            throw new RuntimeException("S3 이미지 다운로드에 실패했습니다.", e);
+        }
+    }
+
+
 }

@@ -1,5 +1,7 @@
 package com.example.caplog.domain.images.service;
 
+import com.example.caplog.domain.ai.chat.dto.response.AiChatResponse;
+import com.example.caplog.domain.ai.chat.service.ChatService;
 import com.example.caplog.domain.images.entity.Images;
 import com.example.caplog.domain.images.repository.ImagesRepository;
 import com.example.caplog.domain.images.type.ImageStatus;
@@ -19,21 +21,18 @@ public class ImagesService {
 
     private final ImagesRepository imagesRepository;
     private final S3Service s3Service;
+    private final ChatService chatService;
 
     @Transactional
-    public Images upload(
+    public AiChatResponse upload(
             MultipartFile file,
             Users user
     ) {
-
-        System.out.println("=== ImagesService upload 진입 ===");
 
         String imageKey = s3Service.upload(
                 file,
                 user.getUsersId()
         );
-
-        System.out.println("=== S3에서 받은 imageKey: " + imageKey + " ===");
 
         Images image = Images.builder()
                 .user(user)
@@ -41,10 +40,38 @@ public class ImagesService {
                 .imageKey(imageKey)
                 .build();
 
-        System.out.println("=== Images DB 저장 직전 ===");
+        imagesRepository.save(image);
 
-        return imagesRepository.save(image);
+        try {
+
+            byte[] imageBytes =
+                    s3Service.download(imageKey);
+
+            AiChatResponse result =
+                    chatService.analyzeImage(
+                            imageBytes,
+                            file.getContentType()
+                    );
+
+            image.updateOcrText(
+                    result.extractedText()
+            );
+
+            image.updateStatus(
+                    ImageStatus.COMPLETED
+            );
+
+            return result;
+
+        } catch (Exception e) {
+
+            image.updateStatus(
+                    ImageStatus.FAILED
+            );
+            throw e;
+        }
     }
+
 
     @Transactional
     public void startProcessing(Long imageId) {
