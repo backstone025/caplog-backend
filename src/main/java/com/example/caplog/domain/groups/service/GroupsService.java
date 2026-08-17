@@ -4,7 +4,11 @@ import com.example.caplog.domain.ai.vector.VectorService;
 import com.example.caplog.domain.auth.service.AuthService;
 import com.example.caplog.domain.event.entity.Event;
 import com.example.caplog.domain.event.repository.EventRepository;
-import com.example.caplog.domain.groups.dto.*;
+import com.example.caplog.domain.groups.dto.request.GroupsUpdateRequest;
+import com.example.caplog.domain.groups.dto.response.GroupsGetCategoriesResponse;
+import com.example.caplog.domain.groups.dto.response.GroupsGetGroupDetailsResponse;
+import com.example.caplog.domain.groups.dto.response.GroupsGetGroupListResponse;
+import com.example.caplog.domain.groups.dto.response.GroupsUpdateResponse;
 import com.example.caplog.domain.groups.entity.Groups;
 import com.example.caplog.domain.groups.exception.GroupsException;
 import com.example.caplog.domain.groups.repository.GroupsRepository;
@@ -132,7 +136,7 @@ public class GroupsService {
     }
 
     // #8-1 그룹 상세 조회
-    public GroupsGetGroupDetailsResponse  getGroupDetails(Long groupId, Integer page){
+    public GroupsGetGroupDetailsResponse getGroupDetails(Long groupId, Integer page){
         Groups group = groupsRepository.findById(groupId)
                 .orElseThrow(() -> new GeneralException(GroupsException.GROUP_NOT_FOUND));
 

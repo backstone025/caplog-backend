@@ -30,6 +30,9 @@ public class UsersDetails {
 
     private boolean alarmConsent;       // 알림 동의 여부
 
+    // FCM Token
+    private String fcmToken;
+
     // 알림 설정
     private boolean imminentAlarm;      // 암박한 알림 허용 여부
 
@@ -47,6 +50,7 @@ public class UsersDetails {
         details.profileImage = ProfileImage.randomSet();
         details.photoConsent = false;
         details.alarmConsent = false;
+        details.fcmToken = null;
         details.imminentAlarm = true;
         details.unviewedAlarm = true;
         details.aiRecommendedAlarm = true;
@@ -59,6 +63,10 @@ public class UsersDetails {
         this.photoConsent = photoConsent;
     }
 
+    public void updateAlarmConsent(boolean alarmConsent) {
+        this.alarmConsent = alarmConsent;
+    }
+
     // 프로필 이미지 변경
     public void updateProfileImage(ProfileImage profileImage) {
         this.profileImage = profileImage;
@@ -69,5 +77,11 @@ public class UsersDetails {
         this.imminentAlarm = imminentAlarm;
         this.unviewedAlarm = unviewedAlarm;
         this.aiRecommendedAlarm = aiRecommendedAlarm;
+    }
+
+    // FCM 토큰 갱신 메서드 (로그인 / 토큰 변경 시 사용)
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+        this.updateAt = LocalDateTime.now();
     }
 }
