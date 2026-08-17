@@ -152,4 +152,10 @@ public class NotificationService {
         usersDetails.updateAlarmConsent(request.isApproved());
         return new NotificationAlarmConsentResponse(request.isApproved());
     }
+
+    // #9-3 사용자 알림 동의여부 조회
+    public NotificationAlarmConsentResponse getAlarmConsent() {
+        UsersDetails usersDetails = usersService.getUsersDetails();
+        return new NotificationAlarmConsentResponse(usersDetails.isAlarmConsent());
+    }
 }

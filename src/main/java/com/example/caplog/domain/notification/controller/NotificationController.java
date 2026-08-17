@@ -34,4 +34,11 @@ public class NotificationController {
         NotificationAlarmConsentResponse response = notificationService.updateAlarmConsent(request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    // #9-3 사용자 알림 동의여부 조회
+    @GetMapping("/alarm-consent")
+    public ResponseEntity<ApiResponse<NotificationAlarmConsentResponse>> getAlarmConsent(){
+        NotificationAlarmConsentResponse response = notificationService.getAlarmConsent();
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 }
