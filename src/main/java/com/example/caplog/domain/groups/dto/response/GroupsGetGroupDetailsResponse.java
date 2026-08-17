@@ -75,7 +75,7 @@ public record GroupsGetGroupDetailsResponse(
                         s.getScheduleId(),
                         s.getTitle(),
                         images.get(s.getScheduleId()),
-                        s.checkScheduleRecentlyUpdated()
+                        s.isNew()
                 ))
                 .toList();
 
