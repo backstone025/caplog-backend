@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.caplog.domain.schedule.dto.response.ScheduleDetailsResponse;
+import com.example.caplog.domain.ai.vector.VectorService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -42,6 +43,7 @@ public class ScheduleService {
     private final EventRepository eventRepository;
     private final S3Service s3Service;
     private final ImagesRepository imagesRepository;
+    private final VectorService vectorService;
 
 
     /**
@@ -811,6 +813,7 @@ public class ScheduleService {
                     scheduleRepository.existsByGroups(group);
 
             if (!hasSchedule) {
+                vectorService.deleteGroupsVector(group);
                 groupsRepository.delete(group);
             }
         }
