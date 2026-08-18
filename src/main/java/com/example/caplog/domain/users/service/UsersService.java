@@ -108,7 +108,7 @@ public class UsersService {
         UsersDetails usersDetails = this.getUsersDetails();
 
         // 로그인 아이디 업데이트
-        String loginId = request.username();
+        String loginId = request.userName();
         checkUserLoginIdForm(loginId);
         user.updateLoginId(loginId);
 
