@@ -14,6 +14,7 @@ import com.example.caplog.global.S3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.caplog.domain.schedule.dto.response.ScheduleDetailsResponse;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -532,5 +533,59 @@ public class ScheduleService {
                     ? updatedAt
                     : createdAt;
         }
+    }
+
+    //단일일정 상세 조회
+    @Transactional
+    public ScheduleDetailsResponse getScheduleDetails(
+            Long scheduleId
+    ) {
+
+        Users user =
+                authService.getCurrentUser();
+
+        // 1. 로그인한 사용자의 일정 조회
+        Schedule schedule =
+                scheduleRepository
+                        .findByScheduleIdAndUser(
+                                scheduleId,
+                                user
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "존재하지 않는 일정입니다."
+                                )
+                        );
+
+        // 2. 일정에 연결된 Event 조회
+        List<Event> events =
+                eventRepository.findBySchedule(
+                        schedule
+                );
+
+        // 3. Event -> Images -> 이미지 URL
+        List<String> imageUrls =
+                events.stream()
+                        .filter(event ->
+                                event.getImages() != null
+                        )
+                        .map(event ->
+                                s3Service.getUrl(
+                                        event.getImages()
+                                                .getImageKey()
+                                )
+                        )
+                        .distinct()
+                        .toList();
+
+        // 4. 상세 조회했으므로 NEW 해제
+        schedule.markAsViewed();
+
+        // 5. 응답
+        return ScheduleDetailsResponse.from(
+                schedule,
+                events,
+                imageUrls
+        );
     }
 }

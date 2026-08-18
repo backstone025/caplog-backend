@@ -1,5 +1,6 @@
 package com.example.caplog.domain.schedule.controller;
 
+import com.example.caplog.domain.schedule.dto.response.ScheduleDetailsResponse;
 import com.example.caplog.domain.schedule.dto.response.ScheduleListResponse;
 import com.example.caplog.domain.schedule.service.ScheduleService;
 import com.example.caplog.global.response.ApiResponse;
@@ -26,6 +27,22 @@ public class ScheduleController {
                         page,
                         category,
                         searchWords
+                );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(result)
+        );
+    }
+
+    @GetMapping("/details/{scheduleId}")
+    public ResponseEntity<ApiResponse<ScheduleDetailsResponse>>
+    getScheduleDetails(
+            @PathVariable Long scheduleId
+    ) {
+
+        ScheduleDetailsResponse result =
+                scheduleService.getScheduleDetails(
+                        scheduleId
                 );
 
         return ResponseEntity.ok(
