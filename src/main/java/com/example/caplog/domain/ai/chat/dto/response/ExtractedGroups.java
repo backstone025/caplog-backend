@@ -7,7 +7,7 @@ public record ExtractedGroups(
         @JsonPropertyDescription("일정 제목")
         String title,
 
-        @JsonPropertyDescription("카테고리. 반드시 공부, 학교, 일상, 기타 중 하나")
+        @JsonPropertyDescription("카테고리. 반드시 STUDY, SCHOOL, DAILY, ETC 하나")
         String category,
 
         @JsonPropertyDescription("일정 시작 일시. yyyy-MM-dd HH:mm:ss 형식. 일정 정보가 없으면 null")
