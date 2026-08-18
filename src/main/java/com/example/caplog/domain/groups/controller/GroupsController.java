@@ -6,6 +6,7 @@ import com.example.caplog.domain.groups.dto.response.GroupsGetGroupDetailsRespon
 import com.example.caplog.domain.groups.dto.response.GroupsGetGroupListResponse;
 import com.example.caplog.domain.groups.dto.response.GroupsUpdateResponse;
 import com.example.caplog.domain.groups.service.GroupsService;
+import com.example.caplog.domain.groups.type.Category;
 import com.example.caplog.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +21,10 @@ public class GroupsController {
     // #4 그룹/단일 일정 전체 조회 API
     @GetMapping
     public ResponseEntity<ApiResponse<GroupsGetGroupListResponse>>  getGroups(
-            @RequestParam Integer page
+            @RequestParam Integer page,
+            @RequestParam Category category
     ) {
-        GroupsGetGroupListResponse response = groupsService.getGroups(page);
+        GroupsGetGroupListResponse response = groupsService.getGroups(page, category);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
