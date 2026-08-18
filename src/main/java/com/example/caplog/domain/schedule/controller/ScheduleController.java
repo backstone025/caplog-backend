@@ -1,5 +1,6 @@
 package com.example.caplog.domain.schedule.controller;
 
+import com.example.caplog.domain.schedule.dto.response.ScheduleDeleteResponse;
 import com.example.caplog.domain.schedule.dto.response.ScheduleDetailsResponse;
 import com.example.caplog.domain.schedule.dto.response.ScheduleListResponse;
 import com.example.caplog.domain.schedule.service.ScheduleService;
@@ -64,6 +65,19 @@ public class ScheduleController {
                         scheduleId,
                         request
                 );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(result)
+        );
+    }
+
+    @DeleteMapping("/{scheduleId}")
+    public ResponseEntity<ApiResponse<ScheduleDeleteResponse>> deleteSchedule(
+            @PathVariable Long scheduleId
+    ) {
+
+        ScheduleDeleteResponse result =
+                scheduleService.deleteSchedule(scheduleId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(result)
