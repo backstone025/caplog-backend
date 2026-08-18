@@ -30,6 +30,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     @Query("SELECT s FROM Schedule s WHERE s.groups.groupId = :groupId")
     List<Schedule> findByGroupsGroupId(@Param("groupId") Long groupId);
 
+    // 특정 그룹에 Schedule이 하나라도 남아있는지 확인
+    boolean existsByGroups(Groups groups);
+
     // 특정 사용자의 전체 일정 개수
     @Query("""
             SELECT COUNT(s)

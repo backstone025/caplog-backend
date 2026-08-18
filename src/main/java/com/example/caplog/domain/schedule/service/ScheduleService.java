@@ -6,7 +6,10 @@ import com.example.caplog.domain.event.repository.EventRepository;
 import com.example.caplog.domain.groups.entity.Groups;
 import com.example.caplog.domain.groups.repository.GroupsRepository;
 import com.example.caplog.domain.groups.type.Category;
+import com.example.caplog.domain.images.entity.Images;
+import com.example.caplog.domain.images.repository.ImagesRepository;
 import com.example.caplog.domain.schedule.dto.request.ScheduleUpdateRequest;
+import com.example.caplog.domain.schedule.dto.response.ScheduleDeleteResponse;
 import com.example.caplog.domain.schedule.dto.response.ScheduleListResponse;
 import com.example.caplog.domain.schedule.dto.response.ScheduleUpdateResponse;
 import com.example.caplog.domain.schedule.entity.Schedule;
@@ -18,12 +21,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.caplog.domain.schedule.dto.response.ScheduleDetailsResponse;
 
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -38,6 +41,8 @@ public class ScheduleService {
     private final GroupsRepository groupsRepository;
     private final EventRepository eventRepository;
     private final S3Service s3Service;
+    private final ImagesRepository imagesRepository;
+
 
     /**
      * 카테고리 + 검색어 기반
@@ -753,5 +758,63 @@ public class ScheduleService {
                     "입력하신 상세 정보에 유효하지 않은 값이 포함되어 있습니다."
             );
         }
+    }
+
+    @Transactional
+    public ScheduleDeleteResponse deleteSchedule(Long scheduleId) {
+
+        Users user = authService.getCurrentUser();
+
+        // 1. 본인의 일정 조회
+        Schedule schedule = scheduleRepository
+                .findByScheduleIdAndUser(scheduleId, user)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "존재하지 않는 일정입니다."
+                        )
+                );
+
+        // 삭제 전에 그룹 정보 보관
+        Groups group = schedule.getGroups();
+
+        // 2. 해당 Schedule의 Event 조회
+        List<Event> events =
+                eventRepository.findBySchedule(schedule);
+
+        // 3. Event가 사용하던 Images 조회
+        List<Images> images = events.stream()
+                .map(Event::getImages)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        // 4. Schedule 삭제
+        // Event는 ON DELETE CASCADE로 함께 삭제
+        scheduleRepository.delete(schedule);
+        scheduleRepository.flush();
+
+        // 5. 이미지 + S3 원본 삭제
+        for (Images image : images) {
+
+            s3Service.delete(
+                    image.getImageKey()
+            );
+
+            imagesRepository.delete(image);
+        }
+
+        // 6. 그룹에 속했던 일정인 경우
+        // 그룹 내부 Schedule이 하나도 남지 않았다면 그룹 삭제
+        if (group != null) {
+
+            boolean hasSchedule =
+                    scheduleRepository.existsByGroups(group);
+
+            if (!hasSchedule) {
+                groupsRepository.delete(group);
+            }
+        }
+
+        return ScheduleDeleteResponse.success();
     }
 }
