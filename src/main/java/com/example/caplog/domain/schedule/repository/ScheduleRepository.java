@@ -13,9 +13,16 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
+
+    Optional<Schedule> findByScheduleIdAndUser(
+            Long scheduleId,
+            Users user
+    );
+
     // 특정 그룹 내부 일정 페이징 조회
     Page<Schedule> findByGroups(Groups groups, Pageable pageable);
 
