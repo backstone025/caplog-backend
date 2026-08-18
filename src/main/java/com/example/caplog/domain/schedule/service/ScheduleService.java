@@ -6,7 +6,9 @@ import com.example.caplog.domain.event.repository.EventRepository;
 import com.example.caplog.domain.groups.entity.Groups;
 import com.example.caplog.domain.groups.repository.GroupsRepository;
 import com.example.caplog.domain.groups.type.Category;
+import com.example.caplog.domain.schedule.dto.request.ScheduleUpdateRequest;
 import com.example.caplog.domain.schedule.dto.response.ScheduleListResponse;
+import com.example.caplog.domain.schedule.dto.response.ScheduleUpdateResponse;
 import com.example.caplog.domain.schedule.entity.Schedule;
 import com.example.caplog.domain.schedule.repository.ScheduleRepository;
 import com.example.caplog.domain.users.entity.Users;
@@ -15,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.caplog.domain.schedule.dto.response.ScheduleDetailsResponse;
+
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -587,5 +590,168 @@ public class ScheduleService {
                 events,
                 imageUrls
         );
+    }
+
+    @Transactional
+    public ScheduleUpdateResponse updateSchedule(
+            Long scheduleId,
+            ScheduleUpdateRequest request
+    ) {
+
+        Users user =
+                authService.getCurrentUser();
+
+        // 1. 본인의 Schedule 조회
+        Schedule schedule =
+                scheduleRepository
+                        .findByScheduleIdAndUser(
+                                scheduleId,
+                                user
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "존재하지 않는 일정입니다."
+                                )
+                        );
+
+        validateUpdateRequest(request);
+
+        // 2. 그룹 처리
+        Groups group = null;
+
+        if (Boolean.TRUE.equals(
+                request.schedule().hasGroup()
+        )) {
+
+            if (request.schedule().groupId() == null) {
+                throw new IllegalArgumentException(
+                        "그룹 아이디가 필요합니다."
+                );
+            }
+
+            group = groupsRepository
+                    .findById(
+                            request.schedule().groupId()
+                    )
+                    .orElseThrow(() ->
+                            new IllegalArgumentException(
+                                    "존재하지 않는 그룹입니다."
+                            )
+                    );
+
+            // 다른 사용자의 그룹에 넣지 못하게 검증
+            if (!group.getUser()
+                    .getUsersId()
+                    .equals(user.getUsersId())) {
+
+                throw new IllegalArgumentException(
+                        "유효하지 않은 그룹입니다."
+                );
+            }
+        }
+
+        Category category;
+
+        try {
+            category = Category.valueOf(
+                    request.schedule()
+                            .category()
+                            .toUpperCase()
+            );
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                    "유효하지 않은 카테고리입니다."
+            );
+
+        }
+
+        // 3. Schedule 수정
+        schedule.updateSchedule(
+                group,
+                request.schedule().title(),
+                request.schedule().aiSummary(),
+                category
+        );
+
+        // 4. Event 수정
+        if (request.events() != null) {
+
+            for (ScheduleUpdateRequest.EventInfo eventRequest
+                    : request.events()) {
+
+                Event event =
+                        eventRepository
+                                .findByEventIdAndSchedule(
+                                        eventRequest.id(),
+                                        schedule
+                                )
+                                .orElseThrow(() ->
+                                        new IllegalArgumentException(
+                                                "존재하지 않는 이벤트입니다."
+                                        )
+                                );
+
+                event.updateEvent(
+                        eventRequest.title(),
+                        eventRequest.location(),
+                        eventRequest.details(),
+                        parseDateTime(
+                                eventRequest.startAt()
+                        ),
+                        parseDateTime(
+                                eventRequest.endAt()
+                        )
+                );
+            }
+        }
+
+        // 5. 수정된 Event 다시 조회
+        List<Event> events =
+                eventRepository.findBySchedule(
+                        schedule
+                );
+
+        return ScheduleUpdateResponse.from(
+                schedule,
+                events
+        );
+    }
+
+    private LocalDateTime parseDateTime(
+            String value
+    ) {
+
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        try {
+            return LocalDateTime.parse(
+                    value,
+                    DateTimeFormatter.ofPattern(
+                            "yyyy-MM-dd HH:mm:ss"
+                    )
+            );
+
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                    "올바르지 않은 날짜 형식입니다."
+            );
+        }
+    }
+
+    private void validateUpdateRequest(
+            ScheduleUpdateRequest request
+    ) {
+
+        if (request == null
+                || request.schedule() == null
+                || request.schedule().title() == null
+                || request.schedule().title().isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "입력하신 상세 정보에 유효하지 않은 값이 포함되어 있습니다."
+            );
+        }
     }
 }

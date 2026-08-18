@@ -7,6 +7,8 @@ import com.example.caplog.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.caplog.domain.schedule.dto.request.ScheduleUpdateRequest;
+import com.example.caplog.domain.schedule.dto.response.ScheduleUpdateResponse;
 
 @RestController
 @RequestMapping("/api/schedule")
@@ -43,6 +45,24 @@ public class ScheduleController {
         ScheduleDetailsResponse result =
                 scheduleService.getScheduleDetails(
                         scheduleId
+                );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(result)
+        );
+    }
+
+    @PutMapping("/{scheduleId}")
+    public ResponseEntity<ApiResponse<ScheduleUpdateResponse>>
+    updateSchedule(
+            @PathVariable Long scheduleId,
+            @RequestBody ScheduleUpdateRequest request
+    ) {
+
+        ScheduleUpdateResponse result =
+                scheduleService.updateSchedule(
+                        scheduleId,
+                        request
                 );
 
         return ResponseEntity.ok(

@@ -37,6 +37,20 @@ public class Event {
         return event;
     }
 
+    public void updateEvent(
+            String title,
+            String location,
+            String details,
+            LocalDateTime startAt,
+            LocalDateTime endAt
+    ) {
+        this.title = title;
+        this.location = location;
+        this.details = details;
+        this.startAt = startAt;
+        this.endAt = endAt;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long eventId;
