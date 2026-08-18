@@ -23,8 +23,10 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             Users user
     );
 
-    // 특정 그룹 내부 일정 페이징 조회
     Page<Schedule> findByGroups(Groups groups, Pageable pageable);
+
+    // 특정 그룹 내부 일정 페이징 조회
+    Page<Schedule> findByGroupsAndCategory(Groups groups, Category category, Pageable pageable);
 
     // 특정 그룹의 일정 목록 조회 (JPQL)
     @Query("SELECT s FROM Schedule s WHERE s.groups.groupId = :groupId")

@@ -16,7 +16,7 @@ import java.util.List;
 public interface GroupsRepository extends JpaRepository<Groups, Long> {
     boolean existsByTitleAndGroupIdNot(String title, Long groupId);
 
-    Page<Groups> findAllByUser(Users user, Pageable pageable);
+    Page<Groups> findByUserAndCategory(Users user, Category category, Pageable pageable);
 
     // TOTAL + 검색어
     @Query("""

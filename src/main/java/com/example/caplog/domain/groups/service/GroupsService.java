@@ -45,31 +45,35 @@ public class GroupsService {
     private final ImagesService imagesService;
 
     // #4 그룹/단일 일정 전체 조회 API
-    public GroupsGetGroupListResponse getGroups(int page){
+    public GroupsGetGroupListResponse getGroups(int page, Category category) {
         Users user = authService.getCurrentUser();
-        int pageSize = 100;
+        int pageSize = 50;
 
-        // 1. PageRequest 생성
         Pageable pageable = PageRequest.of(page, pageSize);
 
-        // 2. DB 조회
-        Page<Groups> groupsPage = groupsRepository.findAllByUser(user, pageable);
+        Page<Groups> groupsPage = groupsRepository.findByUserAndCategory(user, category, pageable);
+        Page<Schedule> schedulePage = scheduleRepository.findByGroupsAndCategory(null, category, pageable);
 
-        // 3. 페이지 범위 유효성 검증
-        checkPageRange(groupsPage);
+        // 통합 페이지 범위 검증
+        checkMergedPageRange(page, groupsPage, schedulePage);
 
-        // 4. DTO 변환 및 반환
-        return GroupsGetGroupListResponse.from(groupsPage);
+        return GroupsGetGroupListResponse.from(groupsPage, schedulePage);
     }
 
-    private void checkPageRange(Page<?> groupsPage){
-        int page = groupsPage.getNumber();
-        int totalPages = groupsPage.getTotalPages();
+    private void checkMergedPageRange(int requestedPage, Page<?> page1, Page<?> page2) {
+        if (requestedPage < 0) {
+            throw new GeneralException(GroupsException.GROUP_PAGE_BAD_RANGE);
+        }
 
-        // 경우 1. 음수 페이지 요청 시
-        // 경우 2. 데이터가 없을 때 (totalPages == 0) -> page가 0보다 크면 에러 (0 허용)
-        // 경우 3. 데이터가 있을 때 (totalPages > 0) -> page가 totalPages 이상이면 에러 (0 ~ totalPages-1 허용)
-        if (page < 0 || (totalPages == 0 && page > 0) || (totalPages > 0 && page >= totalPages)) {
+        int maxTotalPages = Math.max(page1.getTotalPages(), page2.getTotalPages());
+
+        // 두 데이터 모두 존재하지 않는 경우 -> 0페이지 이외 요청 시 에러
+        if (maxTotalPages == 0 && requestedPage > 0) {
+            throw new GeneralException(GroupsException.GROUP_PAGE_BAD_RANGE);
+        }
+
+        // 데이터가 존재하는 경우 -> maxTotalPages 이상 요청 시 에러
+        if (maxTotalPages > 0 && requestedPage >= maxTotalPages) {
             throw new GeneralException(GroupsException.GROUP_PAGE_BAD_RANGE);
         }
     }
