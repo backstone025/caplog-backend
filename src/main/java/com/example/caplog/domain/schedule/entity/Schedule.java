@@ -35,10 +35,12 @@ public class Schedule {
     }
 
     public void updateSchedule(
+            Groups groups,
             String title,
             String aiSummary,
             Category category
     ) {
+        this.groups = groups;
         this.title = title;
         this.aiSummary = aiSummary;
         this.category = category;

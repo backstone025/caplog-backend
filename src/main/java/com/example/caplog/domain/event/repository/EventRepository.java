@@ -14,6 +14,12 @@ import java.util.Optional;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
+
+    Optional<Event> findByEventIdAndSchedule(
+            Long eventId,
+            Schedule schedule
+    );
+
     List<Event> findBySchedule(Schedule schedule);
 
     // 단건 Schedule에 대한 첫 번째 Event 및 Images Fetch Join
