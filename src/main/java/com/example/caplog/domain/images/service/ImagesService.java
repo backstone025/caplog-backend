@@ -8,6 +8,7 @@ import com.example.caplog.domain.event.repository.EventRepository;
 import com.example.caplog.domain.groups.entity.Groups;
 import com.example.caplog.domain.groups.repository.GroupsRepository;
 import com.example.caplog.domain.groups.type.Category;
+import com.example.caplog.domain.images.dto.ImageUploadResponse;
 import com.example.caplog.domain.images.dto.request.UploadConfirmRequest;
 import com.example.caplog.domain.images.entity.Images;
 import com.example.caplog.domain.images.repository.ImagesRepository;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -40,7 +42,7 @@ public class ImagesService {
     private final EventRepository eventRepository;
 
     @Transactional
-    public AiChatResponse upload(
+    public ImageUploadResponse upload(
             MultipartFile file,
             Users user
     ) {
@@ -77,7 +79,10 @@ public class ImagesService {
                     ImageStatus.COMPLETED
             );
 
-            return result;
+            return ImageUploadResponse.from(
+                    image,
+                    result
+            );
 
         } catch (Exception e) {
 

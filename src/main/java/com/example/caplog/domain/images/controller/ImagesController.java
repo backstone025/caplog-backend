@@ -1,7 +1,8 @@
 package com.example.caplog.domain.images.controller;
 
-import com.example.caplog.domain.ai.chat.dto.response.AiChatResponse;
+
 import com.example.caplog.domain.auth.service.AuthService;
+import com.example.caplog.domain.images.dto.ImageUploadResponse;
 import com.example.caplog.domain.images.dto.request.UploadConfirmRequest;
 import com.example.caplog.domain.images.service.ImagesService;
 import com.example.caplog.domain.users.entity.Users;
@@ -20,13 +21,13 @@ public class ImagesController {
     private final AuthService authService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<AiChatResponse>> uploadImage(
+    public ResponseEntity<ApiResponse<ImageUploadResponse>> uploadImage(
             @RequestPart("image") MultipartFile image
     ) {
 
         Users user = authService.getCurrentUser();
 
-        AiChatResponse result =
+        ImageUploadResponse result =
                 imagesService.upload(image, user);
 
         return ResponseEntity.ok(
