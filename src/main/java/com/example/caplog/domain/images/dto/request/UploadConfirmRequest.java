@@ -7,9 +7,18 @@ public record UploadConfirmRequest(
         String title,
         String aiSummary,
         String category,
-        Long groupId,
+
+        TargetType targetType,
+        Long targetId,
+
         List<EventRequest> events
 ) {
+
+    public enum TargetType {
+        NONE,
+        GROUP,
+        SCHEDULE
+    }
 
     public record EventRequest(
             String title,

@@ -50,6 +50,10 @@ public class Schedule {
         this.viewedAt = LocalDateTime.now();
     }
 
+    public void changeGroup(Groups group) {
+        this.groups = group;
+    }
+
     public boolean isNew() {
 
         if (viewedAt == null) {

@@ -183,4 +183,52 @@ public class ChatService {
 
         return outputConverter.convert(rawResponse);
     }
+
+    public String generateGroupTitle(
+            String existingTitle,
+            String existingSummary,
+            String newTitle,
+            String newSummary
+    ) {
+
+        String prompt = """
+            아래 두 정보는 서로 관련된 정보입니다.
+
+            기존 정보
+            제목: %s
+            요약: %s
+
+            새 정보
+            제목: %s
+            요약: %s
+
+            두 정보를 모두 아우를 수 있는
+            짧고 자연스러운 그룹명을 만들어주세요.
+
+            규칙:
+            - 너무 길지 않게 작성
+            - '관련 정보', '모음', '그룹' 같은 표현은 사용하지 않기
+            - 두 정보의 공통 주제를 중심으로 작성
+            - 결과는 그룹명만 출력
+            """.formatted(
+                existingTitle,
+                existingSummary,
+                newTitle,
+                newSummary
+        );
+
+        String result =
+                chatClient.prompt()
+                        .user(prompt)
+                        .call()
+                        .content();
+
+        if (result == null || result.isBlank()) {
+            throw new IllegalStateException(
+                    "그룹명 생성에 실패했습니다."
+            );
+        }
+
+        return result.trim();
+    }
 }
