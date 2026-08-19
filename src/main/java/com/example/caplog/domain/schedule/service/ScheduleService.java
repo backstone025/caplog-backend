@@ -4,9 +4,12 @@ import com.example.caplog.domain.auth.service.AuthService;
 import com.example.caplog.domain.event.entity.Event;
 import com.example.caplog.domain.event.repository.EventRepository;
 import com.example.caplog.domain.groups.entity.Groups;
-import com.example.caplog.domain.images.entity.Images;
+import com.example.caplog.domain.groups.repository.GroupsRepository;
+import com.example.caplog.domain.groups.type.Category;
 import com.example.caplog.domain.images.service.ImagesService;
 import com.example.caplog.domain.schedule.dto.ScheduleDetailsResponse;
+import com.example.caplog.domain.schedule.dto.ScheduleUpdateRequest;
+import com.example.caplog.domain.schedule.dto.ScheduleUpdateResponse;
 import com.example.caplog.domain.schedule.entity.Schedule;
 import com.example.caplog.domain.schedule.repository.ScheduleRepository;
 import com.example.caplog.domain.users.entity.Users;
@@ -27,6 +30,7 @@ public class ScheduleService {
     private final EventRepository eventRepository;
     private final AuthService authService;
     private final ImagesService imagesService;
+    private final GroupsRepository groupsRepository;
 
     @Transactional(readOnly = true)
     public ScheduleDetailsResponse getScheduleDetails(Long scheduleId) {
@@ -135,4 +139,582 @@ public class ScheduleService {
             );
         }
     }
-}
+
+        /**
+         * 일정 수정
+         */
+        @Transactional
+        public ScheduleUpdateResponse updateSchedule(
+                Long scheduleId,
+                ScheduleUpdateRequest request
+        ) {
+
+            // 1. 로그인 사용자
+            Users user = authService.getCurrentUser();
+
+            // 2. 요청값 검증
+            validateUpdateRequest(request);
+
+            ScheduleUpdateRequest.ScheduleInfo requestSchedule =
+                    request.schedule();
+
+            // 3. 수정 대상 Schedule 조회 + 사용자 검증
+            Schedule schedule = scheduleRepository
+                    .findByScheduleIdAndUser(scheduleId, user)
+                    .orElseThrow(() ->
+                            new GeneralException(
+                                    GlobalErrorCode.SCHEDULE_NOT_FOUND
+                            )
+                    );
+
+            // 수정 전 그룹 기억
+            Groups originalGroup = schedule.getGroups();
+
+            // 4. 카테고리 변환
+            Category category = parseCategory(
+                    requestSchedule.category()
+            );
+
+            // 5. Schedule 제목 / AI 요약 수정
+            schedule.updateSchedule(
+                    requestSchedule.title(),
+                    requestSchedule.aiSummary()
+            );
+
+            // 6. 수정 후 들어갈 그룹 결정
+            Groups destinationGroup = resolveDestinationGroup(
+                    schedule,
+                    originalGroup,
+                    requestSchedule.groupId(),
+                    category,
+                    user
+            );
+
+            /*
+             * changeGroup()으로 변경된 FK를 DB에 먼저 반영한다.
+             * 그래야 기존 그룹에 실제로 몇 개가 남았는지 정확하게 조회 가능.
+             */
+            scheduleRepository.flush();
+
+            // 7. 기존 그룹이 완전히 비었으면 삭제
+            cleanupOriginalGroup(
+                    originalGroup,
+                    destinationGroup
+            );
+
+            // 8. Event 수정
+            List<ScheduleUpdateResponse.EventInfo> eventResponses =
+                    updateEvents(
+                            schedule,
+                            request.events()
+                    );
+
+            scheduleRepository.flush();
+
+            // 9. 최종 그룹에 Schedule이 몇 개 있는지 확인
+            long finalScheduleCount =
+                    scheduleRepository.countByGroups(
+                            destinationGroup
+                    );
+
+            /*
+             * 1개면 단일정보
+             * 2개 이상이면 실제 그룹
+             */
+            boolean hasGroup =
+                    finalScheduleCount >= 2;
+
+            // 10. 응답
+            return new ScheduleUpdateResponse(
+                    new ScheduleUpdateResponse.ScheduleInfo(
+                            schedule.getScheduleId(),
+                            schedule.getTitle(),
+                            schedule.getAiSummary(),
+                            destinationGroup.getCategory().name(),
+                            hasGroup,
+                            destinationGroup.getGroupId(),
+                            destinationGroup.getTitle()
+                    ),
+                    eventResponses
+            );
+        }
+
+
+        /**
+         * 수정 후 Schedule이 어느 Groups에 들어갈지 결정
+         */
+        private Groups resolveDestinationGroup(
+                Schedule schedule,
+                Groups originalGroup,
+                Long targetGroupId,
+                Category category,
+                Users user
+        ) {
+
+            /*
+             * 주제를 선택하지 않은 경우
+             *
+             * → 현재 Schedule을 단일정보로 만든다.
+             */
+            if (targetGroupId == null) {
+
+                return moveToSingleGroup(
+                        schedule,
+                        originalGroup,
+                        category,
+                        user
+                );
+            }
+
+            // 선택한 주제 Groups 조회
+            Groups targetGroup = groupsRepository
+                    .findByGroupIdAndUser(
+                            targetGroupId,
+                            user
+                    )
+                    .orElseThrow(() ->
+                            new GeneralException(
+                                    GlobalErrorCode.GROUP_NOT_FOUND
+                            )
+                    );
+
+            /*
+             * 현재 Schedule이 원래 속해 있던 그룹을
+             * 그대로 선택한 경우
+             */
+            if (targetGroup.getGroupId()
+                    .equals(originalGroup.getGroupId())) {
+
+                /*
+                 * 카테고리까지 동일
+                 *
+                 * → 그룹 이동 필요 없음
+                 * → Schedule 제목/내용만 수정
+                 */
+                if (targetGroup.getCategory() == category) {
+                    return originalGroup;
+                }
+
+                /*
+                 * 같은 그룹인데 카테고리를 변경한 경우
+                 *
+                 * 그룹 전체 카테고리를 바꾸면 안 된다.
+                 *
+                 * 현재 그룹에 Schedule이 하나뿐이라면
+                 * 이 정보 자체가 단일정보이므로
+                 * 기존 Groups.category만 변경.
+                 *
+                 * 여러 개라면
+                 * 현재 Schedule만 빠져서 새 단일정보 Groups 생성.
+                 */
+                return moveToSingleGroup(
+                        schedule,
+                        originalGroup,
+                        category,
+                        user
+                );
+            }
+
+            /*
+             * 선택한 주제는 선택한 category에 속해야 한다.
+             */
+            if (targetGroup.getCategory() != category) {
+
+                throw new GeneralException(
+                        GlobalErrorCode.SCHEDULE_INVALID_DETAILS
+                );
+            }
+
+            // 선택한 Groups 안의 Schedule 개수
+            long targetScheduleCount =
+                    scheduleRepository.countByGroups(
+                            targetGroup
+                    );
+
+            /*
+             * Schedule 1개
+             *
+             * → 화면상 단일정보
+             * → 수정 대상 Schedule과 합쳐서 새로운 그룹 생성
+             */
+            if (targetScheduleCount == 1) {
+
+                return mergeWithSingleGroup(
+                        schedule,
+                        targetGroup,
+                        category,
+                        user
+                );
+            }
+
+            /*
+             * Schedule 2개 이상
+             *
+             * → 이미 존재하는 실제 그룹
+             * → 해당 그룹으로 이동
+             */
+            schedule.changeGroup(targetGroup);
+
+            return targetGroup;
+        }
+
+
+        /**
+         * Schedule을 단일정보 상태로 만든다.
+         */
+        private Groups moveToSingleGroup(
+                Schedule schedule,
+                Groups originalGroup,
+                Category category,
+                Users user
+        ) {
+
+            long originalScheduleCount =
+                    scheduleRepository.countByGroups(
+                            originalGroup
+                    );
+
+            /*
+             * 원래 Groups에 Schedule이 하나뿐이었다면
+             *
+             * 이미 단일정보 상태이므로
+             * 새로운 Groups를 만들 필요가 없다.
+             *
+             * 정보 제목을 수정했다고
+             * Groups.title까지 바꾸지는 않는다.
+             *
+             * 카테고리만 변경한다.
+             */
+            if (originalScheduleCount == 1) {
+
+                originalGroup.updateCategory(category);
+
+                return originalGroup;
+            }
+
+            /*
+             * 기존 그룹에 Schedule이 여러 개 있었다면
+             *
+             * 현재 Schedule만 빠져나와
+             * Schedule 1개짜리 새로운 Groups 생성.
+             *
+             * 단일정보일 때 Groups.title은 화면에 표시하지 않지만
+             * DB 값은 필요하므로 일단 Schedule 제목을 저장.
+             */
+            Groups newGroup = Groups.createGroups(
+                    user,
+                    schedule.getTitle(),
+                    category
+            );
+
+            groupsRepository.save(newGroup);
+
+            schedule.changeGroup(newGroup);
+
+            return newGroup;
+        }
+
+
+        /**
+         * 선택한 Groups가 Schedule 1개짜리 단일정보일 경우
+         *
+         * 기존 단일 Schedule + 수정 Schedule
+         * → 새로운 그룹 생성
+         */
+        private Groups mergeWithSingleGroup(
+                Schedule schedule,
+                Groups targetGroup,
+                Category category,
+                Users user
+        ) {
+
+            List<Schedule> targetSchedules =
+                    scheduleRepository.findByGroups(
+                            targetGroup
+                    );
+
+            // 혹시 데이터가 꼬였을 경우 방어
+            if (targetSchedules.size() != 1) {
+
+                throw new GeneralException(
+                        GlobalErrorCode.SCHEDULE_INVALID_DETAILS
+                );
+            }
+
+            Schedule targetSchedule =
+                    targetSchedules.get(0);
+
+            // 자기 자신과 묶는 것 방지
+            if (targetSchedule.getScheduleId()
+                    .equals(schedule.getScheduleId())) {
+
+                throw new GeneralException(
+                        GlobalErrorCode.SCHEDULE_INVALID_DETAILS
+                );
+            }
+
+            /*
+             * 수정 Schedule 제목 + 기존 단일정보 제목을 보고
+             * 새로운 그룹명 생성.
+             *
+             * 지금은 가짜 메서드.
+             * 나중에 업로드 확정에서 사용하는 AI 그룹명 생성 코드로 교체.
+             */
+            String newGroupTitle =
+                    generateGroupTitle(
+                            schedule.getTitle(),
+                            targetSchedule.getTitle()
+                    );
+
+            Groups newGroup =
+                    Groups.createGroups(
+                            user,
+                            newGroupTitle,
+                            category
+                    );
+
+            groupsRepository.save(newGroup);
+
+            /*
+             * 두 Schedule 모두 새로운 Groups로 이동
+             */
+            schedule.changeGroup(newGroup);
+            targetSchedule.changeGroup(newGroup);
+
+            /*
+             * FK 변경 먼저 DB 반영
+             */
+            scheduleRepository.flush();
+
+            /*
+             * targetGroup은 원래 Schedule 1개짜리였고
+             * 그 Schedule까지 새 Groups로 이동했으므로
+             * 이제 비어 있다.
+             */
+            groupsRepository.delete(targetGroup);
+
+            return newGroup;
+        }
+
+
+        /**
+         * 수정 전 Groups 정리
+         */
+        private void cleanupOriginalGroup(
+                Groups originalGroup,
+                Groups destinationGroup
+        ) {
+
+            /*
+             * 최종 그룹이 원래 그룹과 동일
+             *
+             * → 아무 작업도 하지 않음.
+             */
+            if (originalGroup.getGroupId()
+                    .equals(destinationGroup.getGroupId())) {
+
+                return;
+            }
+
+            scheduleRepository.flush();
+
+            /*
+             * 수정한 Schedule이 이동한 뒤
+             * 원래 그룹에 몇 개가 남았는지 조회
+             */
+            long remainingCount =
+                    scheduleRepository.countByGroups(
+                            originalGroup
+                    );
+
+            /*
+             * 0개면 Groups 삭제
+             */
+            if (remainingCount == 0) {
+
+                groupsRepository.delete(
+                        originalGroup
+                );
+            }
+
+            /*
+             * 1개가 남더라도 Groups는 삭제하지 않는다.
+             *
+             * 우리 구조에서는
+             * Schedule 1개짜리 Groups = 단일정보이기 때문.
+             *
+             * 그리고 그룹 제목도 수정하지 않는다.
+             * 목록조회에서 Schedule이 1개면
+             * Groups.title이 아니라 Schedule.title을 보여준다.
+             */
+        }
+
+
+        /**
+         * Event 수정
+         */
+        private List<ScheduleUpdateResponse.EventInfo> updateEvents(
+                Schedule schedule,
+                List<ScheduleUpdateRequest.EventInfo> requests
+        ) {
+
+            if (requests == null) {
+
+                throw new GeneralException(
+                        GlobalErrorCode.SCHEDULE_INVALID_DETAILS
+                );
+            }
+
+            return requests.stream()
+                    .map(request -> {
+
+                        validateEvent(request);
+
+                        /*
+                         * 요청으로 들어온 Event가
+                         * 해당 Schedule에 실제로 포함된 Event인지 검증
+                         */
+                        Event event = eventRepository
+                                .findByEventIdAndSchedule(
+                                        request.id(),
+                                        schedule
+                                )
+                                .orElseThrow(() ->
+                                        new GeneralException(
+                                                GlobalErrorCode.SCHEDULE_INVALID_DETAILS
+                                        )
+                                );
+
+                        event.updateEvent(
+                                request.title(),
+                                request.details(),
+                                request.startAt(),
+                                request.endAt()
+                        );
+
+                        return new ScheduleUpdateResponse.EventInfo(
+                                event.getEventId(),
+                                event.getTitle(),
+                                event.getStartAt(),
+                                event.getEndAt(),
+                                event.getDetails()
+                        );
+                    })
+                    .toList();
+        }
+
+
+        /**
+         * Event 요청값 검증
+         */
+        private void validateEvent(
+                ScheduleUpdateRequest.EventInfo event
+        ) {
+
+            if (event.id() == null
+                    || event.title() == null
+                    || event.title().isBlank()) {
+
+                throw new GeneralException(
+                        GlobalErrorCode.SCHEDULE_INVALID_DETAILS
+                );
+            }
+
+            /*
+             * 날짜 정보가 아닌 일반 정보면
+             *
+             * startAt = null
+             * endAt = null
+             *
+             * 이어도 정상.
+             */
+
+            /*
+             * 시작/종료 시간이 둘 다 있을 때만
+             * 날짜 순서 확인
+             */
+            if (event.startAt() != null
+                    && event.endAt() != null
+                    && event.endAt()
+                    .isBefore(event.startAt())) {
+
+                throw new GeneralException(
+                        GlobalErrorCode.SCHEDULE_INVALID_DETAILS
+                );
+            }
+        }
+
+
+        /**
+         * 전체 수정 요청 검증
+         */
+        private void validateUpdateRequest(
+                ScheduleUpdateRequest request
+        ) {
+
+            if (request == null
+                    || request.schedule() == null
+                    || request.events() == null) {
+
+                throw new GeneralException(
+                        GlobalErrorCode.SCHEDULE_INVALID_DETAILS
+                );
+            }
+
+            ScheduleUpdateRequest.ScheduleInfo schedule =
+                    request.schedule();
+
+            if (schedule.title() == null
+                    || schedule.title().isBlank()
+                    || schedule.category() == null
+                    || schedule.category().isBlank()) {
+
+                throw new GeneralException(
+                        GlobalErrorCode.SCHEDULE_INVALID_DETAILS
+                );
+            }
+        }
+
+
+        /**
+         * Category 문자열 → Enum
+         */
+        private Category parseCategory(
+                String category
+        ) {
+
+            try {
+
+                return Category.valueOf(
+                        category.toUpperCase()
+                );
+
+            } catch (Exception e) {
+
+                throw new GeneralException(
+                        GlobalErrorCode.SCHEDULE_INVALID_DETAILS
+                );
+            }
+        }
+
+
+        /**
+         * 임시 그룹명 생성
+         */
+        private String generateGroupTitle(
+                String firstTitle,
+                String secondTitle
+        ) {
+
+            /*
+             * TODO
+             *
+             * 업로드 확정 기능에서 사용하고 있는
+             * AI 그룹명 생성 코드로 교체.
+             */
+
+            return firstTitle
+                    + " / "
+                    + secondTitle;
+        }
+    }

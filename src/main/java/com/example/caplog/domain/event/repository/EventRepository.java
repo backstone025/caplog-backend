@@ -69,4 +69,9 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findAllByScheduleWithImages(
             @Param("schedule") Schedule schedule
     );
+
+    Optional<Event> findByEventIdAndSchedule(
+            Long eventId,
+            Schedule schedule
+    );
 }
