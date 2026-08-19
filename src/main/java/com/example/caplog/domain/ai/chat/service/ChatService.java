@@ -26,7 +26,7 @@ public class ChatService {
                 전달받은 [기존 일정 이력]과 [이미지 추출 텍스트]를 참고하여 새로 등록할 일정을 정교하게 추출해 주세요.
                 
                 [추출 규칙]
-                1. 카테고리는 다음 항목 중 가장 적절한 하나를 선택해야 합니다: DEFAULT, WORK, PERSONAL, STUDY, ETC
+                1. 카테고리는 다음 항목 중 가장 적절한 하나를 선택해야 합니다: STUDY, SCHOOL, DAILY, ETC
                 2. 날짜 및 시간 포맷은 반드시 'yyyy-MM-dd HH:mm:ss' 형태여야 합니다. (예: 2026-08-07 14:00:00)
                 
                 [기존 일정 이력]
