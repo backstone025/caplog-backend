@@ -22,9 +22,9 @@ public class UploadController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-//    @PostMapping("/confirm")
-//    public ResponseEntity<ApiResponse> confirm(@RequestParam ConfirmRequest confirmRequest) {
-//    }
-
-
+    @PostMapping("/confirm")
+    public ResponseEntity<ApiResponse<Void>> confirm(@RequestBody ConfirmRequest confirmRequest) {
+        uploadService.confirmSchedule(confirmRequest);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }

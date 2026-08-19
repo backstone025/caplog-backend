@@ -55,4 +55,14 @@ public class Schedule {
     public void changeGroup(Groups groups) {
         this.groups = groups;
     }
+
+    public static Schedule createSchedule(Groups groups, String title, String aiSummary) {
+        Schedule schedule = new Schedule();
+        schedule.groups = groups;
+        schedule.title = title;
+        schedule.aiSummary = aiSummary;
+        schedule.createdAt = LocalDateTime.now();
+        schedule.updatedAt = LocalDateTime.now();
+        return schedule;
+    }
 }

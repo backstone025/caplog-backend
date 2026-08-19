@@ -52,4 +52,26 @@ public class Event {
         this.startAt = startAt;
         this.endAt = endAt;
     }
+
+    public static Event createEvent(
+            Schedule schedule,
+            Images images,
+            String title,
+            String details,
+            String aiSummary,
+            String videoUrl,
+            LocalDateTime startAt,
+            LocalDateTime endAt
+    ) {
+        Event event = new Event();
+        event.schedule = schedule;
+        event.images = images;
+        event.title = title;
+        event.details = details;
+        event.aiSummary = aiSummary;
+        event.videoUrl = videoUrl;
+        event.startAt = startAt;
+        event.endAt = endAt;
+        return event;
+    }
 }
