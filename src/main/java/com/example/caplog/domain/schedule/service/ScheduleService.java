@@ -21,10 +21,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.caplog.domain.images.entity.Images;
+import com.example.caplog.domain.schedule.dto.ScheduleEventRangeResponse;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -1082,6 +1087,110 @@ public class ScheduleService {
         }
 
         return ScheduleDeleteResponse.success();
+    }
+
+    //날짜 범위 내 이벤트 반환
+    @Transactional(readOnly = true)
+    public ScheduleEventRangeResponse getEventsByDateRange(
+            LocalDateTime startDateTime,
+            LocalDateTime endDateTime
+    ) {
+
+        // 1. 날짜 검증
+        validateDateRange(
+                startDateTime,
+                endDateTime
+        );
+
+        // 2. 로그인 사용자
+        Users user =
+                authService.getCurrentUser();
+
+        // 3. 범위 내 Event 전체 조회
+        List<Event> events =
+                eventRepository.findEventsByDateRange(
+                        user,
+                        startDateTime,
+                        endDateTime
+                );
+
+        // 4. 날짜별 Event 개수 계산
+        Map<LocalDate, Long> dateCountMap =
+                new LinkedHashMap<>();
+
+        for (Event event : events) {
+
+            LocalDate date =
+                    event.getStartAt()
+                            .toLocalDate();
+
+            dateCountMap.put(
+                    date,
+                    dateCountMap.getOrDefault(
+                            date,
+                            0L
+                    ) + 1
+            );
+        }
+
+        // 5. dateCounts 응답 변환
+        List<ScheduleEventRangeResponse.DateCount> dateCounts =
+                dateCountMap.entrySet()
+                        .stream()
+                        .map(entry ->
+                                new ScheduleEventRangeResponse.DateCount(
+                                        entry.getKey(),
+                                        entry.getValue()
+                                )
+                        )
+                        .toList();
+
+        // 6. Event 응답 변환
+        List<ScheduleEventRangeResponse.EventInfo> eventInfos =
+                events.stream()
+                        .map(event -> {
+
+                            String captureImg = null;
+
+                            if (event.getImages() != null) {
+                                captureImg =
+                                        imagesService.getUrl(
+                                                event.getImages()
+                                        );
+                            }
+
+                            return new ScheduleEventRangeResponse.EventInfo(
+                                    event.getSchedule().getScheduleId(),
+                                    event.getEventId(),
+                                    event.getStartAt(),
+                                    captureImg,
+                                    event.getTitle()
+                            );
+                        })
+                        .toList();
+
+        // 7. 최종 응답
+        return new ScheduleEventRangeResponse(
+                startDateTime,
+                endDateTime,
+                dateCounts,
+                eventInfos
+        );
+    }
+
+    private void validateDateRange(
+            LocalDateTime startDateTime,
+            LocalDateTime endDateTime
+    ) {
+
+        if (startDateTime == null
+                || endDateTime == null
+                || startDateTime.isAfter(endDateTime)) {
+
+            throw new GeneralException(
+                    GlobalErrorCode.SCHEDULE_INVALID_DATE_RANGE
+            );
+        }
     }
 
 }
