@@ -132,7 +132,7 @@ public class GroupsService {
     // 해당 그룹은 로그인한 사용자의 것인지 검증하는 기능
     private void checkGroupUser(Groups group){
         Long userId = authService.getUserId();
-        if(!Objects.equals(group.getGroupId(), userId)){
+        if (!Objects.equals(group.getUser().getUsersId(), userId)){
             throw new GeneralException(GroupsException.GROUP_USER_NOT_LOGIN_USER);
         }
     }
