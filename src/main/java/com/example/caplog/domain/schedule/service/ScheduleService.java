@@ -5,13 +5,13 @@ import com.example.caplog.domain.event.entity.Event;
 import com.example.caplog.domain.event.repository.EventRepository;
 import com.example.caplog.domain.groups.entity.Groups;
 import com.example.caplog.domain.images.entity.Images;
+import com.example.caplog.domain.images.service.ImagesService;
 import com.example.caplog.domain.schedule.dto.ScheduleDetailsResponse;
 import com.example.caplog.domain.schedule.entity.Schedule;
 import com.example.caplog.domain.schedule.repository.ScheduleRepository;
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.global.error.code.GlobalErrorCode;
 import com.example.caplog.global.error.exception.GeneralException;
-//import com.example.caplog.global.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +26,7 @@ public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final EventRepository eventRepository;
     private final AuthService authService;
-    //private final S3Service s3Service;
+    private final ImagesService imagesService;
 
     @Transactional(readOnly = true)
     public ScheduleDetailsResponse getScheduleDetails(Long scheduleId) {
@@ -52,8 +52,7 @@ public class ScheduleService {
                 .map(Event::getImages)
                 .filter(Objects::nonNull)
                 .distinct()
-                .map(Images::getImageKey)
-                //.map(s3Service::getUrl)
+                .map(imagesService::getUrl)
                 .toList();
 
         // 6. Event 응답 변환
