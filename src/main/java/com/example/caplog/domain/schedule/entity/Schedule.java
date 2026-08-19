@@ -33,7 +33,10 @@ public class Schedule {
     @OnDelete(action = OnDeleteAction.CASCADE)      // DB의 'On Delete Cascade' 기능 활성화
     private Groups groups;              // 그룹
 
-    private String title;               // 일정 제목
+    private String title;   // 일정 제목
+
+    @Column(columnDefinition = "TEXT")
+    private String aiSummary;
 
     private LocalDateTime viewedAt;     // 열람 일시
 

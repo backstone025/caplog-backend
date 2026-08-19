@@ -11,7 +11,8 @@ public enum GlobalErrorCode implements BaseErrorCode {
     INTERNAL_SERVER_ERROR("COMMON_500", "서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     S3_UPLOAD_FAILED("S3_500_1", "이미지 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     S3_DELETE_FAILED("S3_500_2", "이미지 삭제에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
-    IMAGE_NOT_FOUND("IMAGE_404", "이미지를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+    IMAGE_NOT_FOUND("IMAGE_404", "이미지를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    SCHEDULE_NOT_FOUND("SCHEDULE_404", "존재하지 않는 일정입니다.", HttpStatus.NOT_FOUND);
 
 
     private final String code;
