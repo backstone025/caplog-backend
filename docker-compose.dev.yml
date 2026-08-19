@@ -84,7 +84,7 @@ services:
       - ./nginx/service-url.inc:/etc/nginx/conf.d/service-url.inc
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
-      - caplog-api-blue
+      - caplog-api-green
     networks:
       - app-network
 
