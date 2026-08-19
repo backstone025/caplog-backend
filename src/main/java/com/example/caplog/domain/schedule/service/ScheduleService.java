@@ -1,5 +1,7 @@
 package com.example.caplog.domain.schedule.service;
 
+import com.example.caplog.domain.ai.chat.service.AiExtractService;
+import com.example.caplog.domain.ai.vector.VectorService;
 import com.example.caplog.domain.auth.service.AuthService;
 import com.example.caplog.domain.event.entity.Event;
 import com.example.caplog.domain.event.repository.EventRepository;
@@ -40,6 +42,8 @@ public class ScheduleService {
     private final AuthService authService;
     private final ImagesService imagesService;
     private final GroupsRepository groupsRepository;
+    private final AiExtractService aiExtractService;
+    private final VectorService vectorService;
 
     @Transactional(readOnly = true)
     public ScheduleDetailsResponse getScheduleDetails(Long scheduleId) {
@@ -482,27 +486,31 @@ public class ScheduleService {
                         category
                 );
 
-        groupsRepository.save(newGroup);
+        // DB에 새 그룹 저장
+        Groups savedGroup =
+                groupsRepository.save(newGroup);
+
+        // 새 그룹을 Vector DB에도 저장
+        vectorService.saveGroupsVector(savedGroup);
 
         /*
          * 두 Schedule 모두 새로운 Groups로 이동
          */
-        schedule.changeGroup(newGroup);
-        targetSchedule.changeGroup(newGroup);
+        schedule.changeGroup(savedGroup);
+        targetSchedule.changeGroup(savedGroup);
 
         /*
          * FK 변경 먼저 DB 반영
          */
         scheduleRepository.flush();
 
-        /*
-         * targetGroup은 원래 Schedule 1개짜리였고
-         * 그 Schedule까지 새 Groups로 이동했으므로
-         * 이제 비어 있다.
-         */
+        // 기존 단일 그룹 Vector DB 삭제
+        vectorService.deleteGroupsVector(targetGroup);
+
+        // 기존 단일 그룹 DB 삭제
         groupsRepository.delete(targetGroup);
 
-        return newGroup;
+        return savedGroup;
     }
 
 
@@ -541,6 +549,12 @@ public class ScheduleService {
          */
         if (remainingCount == 0) {
 
+            // Vector DB에서도 삭제
+            vectorService.deleteGroupsVector(
+                    originalGroup
+            );
+
+            // DB 삭제
             groupsRepository.delete(
                     originalGroup
             );
@@ -707,24 +721,15 @@ public class ScheduleService {
     }
 
 
-    /**
-     * 임시 그룹명 생성
-     */
+    //새 그룹 이름 생성
     private String generateGroupTitle(
             String firstTitle,
             String secondTitle
     ) {
-
-        /*
-         * TODO
-         *
-         * 업로드 확정 기능에서 사용하고 있는
-         * AI 그룹명 생성 코드로 교체.
-         */
-
-        return firstTitle
-                + " / "
-                + secondTitle;
+        return aiExtractService.generateGroupTitle(
+                firstTitle,
+                secondTitle
+        );
     }
 
     @Transactional(readOnly = true)
