@@ -104,4 +104,45 @@ public class AiExtractService {
                 imageEntity.getImageId(), matchedGroupId);
         return rawResponse.withGroupInfo(matchedGroupId, matchedGroupName);
     }
+    //그룹명 생성
+    public String generateGroupTitle(
+            String firstTitle,
+            String secondTitle
+    ) {
+
+        String promptText = """
+            당신은 일정들을 하나의 그룹으로 묶기 위한 그룹명 생성 전문가입니다.
+
+            아래 두 일정의 제목을 보고,
+            두 일정을 함께 묶을 수 있는 자연스럽고 간결한 한국어 그룹명을 생성하세요.
+
+            [규칙]
+            - 반드시 그룹명만 출력하세요.
+            - 설명이나 따옴표는 출력하지 마세요.
+            - 너무 길지 않게 작성하세요.
+            - 두 일정의 공통 주제가 드러나야 합니다.
+            - 단순히 두 제목을 이어 붙이지 마세요.
+
+            첫 번째 일정 제목:
+            {firstTitle}
+
+            두 번째 일정 제목:
+            {secondTitle}
+            """;
+
+        PromptTemplate template = new PromptTemplate(promptText);
+        template.add("firstTitle", firstTitle);
+        template.add("secondTitle", secondTitle);
+
+        String groupTitle = chatClient
+                .prompt(template.create())
+                .call()
+                .content();
+
+        if (groupTitle == null || groupTitle.isBlank()) {
+            return firstTitle + " / " + secondTitle;
+        }
+
+        return groupTitle.trim();
+    }
 }
