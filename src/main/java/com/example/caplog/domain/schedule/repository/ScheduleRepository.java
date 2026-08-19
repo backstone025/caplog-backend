@@ -12,10 +12,13 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     Page<Schedule> findByGroups(Groups groups, Pageable pageable);
+    List<Schedule> findByGroups(Groups groups);
+    long countByGroups(Groups groups);
 
     // 특정 그룹의 일정 목록 조회 (JPQL)
     @Query("SELECT s FROM Schedule s WHERE s.groups.groupId = :groupId")
@@ -57,5 +60,18 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("user") Users user,
             @Param("thresholdDate") LocalDateTime thresholdDate,
             Pageable pageable
+    );
+
+    //현재 로그인 사용자의 schedule인지 검증
+    @Query("""
+        SELECT s
+        FROM Schedule s
+        JOIN FETCH s.groups g
+        WHERE s.scheduleId = :scheduleId
+        AND g.user = :user
+        """)
+    Optional<Schedule> findByScheduleIdAndUser(
+            @Param("scheduleId") Long scheduleId,
+            @Param("user") Users user
     );
 }

@@ -38,5 +38,18 @@ public class Event {
 
     private LocalDateTime startAt;      // 시작 일시
 
-    private LocalDateTime endAt;        // 종료 일시
+    private LocalDateTime endAt;    // 종료 일시
+
+    //일정 수정
+    public void updateEvent(
+            String title,
+            String details,
+            LocalDateTime startAt,
+            LocalDateTime endAt
+    ) {
+        this.title = title;
+        this.details = details;
+        this.startAt = startAt;
+        this.endAt = endAt;
+    }
 }
