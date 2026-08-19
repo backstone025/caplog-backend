@@ -27,7 +27,7 @@ public class NotificationController {
     }
 
     // #9-2 사용자 알림 동의 확정
-    @PutMapping("/alarm-consent")
+    @PostMapping("/alarm-consent")
     public ResponseEntity<ApiResponse<NotificationAlarmConsentResponse>> putPhotoConsent(
             @RequestBody NotificationAlarmConsentRequest request
     ) {

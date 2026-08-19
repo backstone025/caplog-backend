@@ -26,7 +26,7 @@ public class UsersController {
     }
 
     // #1-2 사용자 사진 접근 동의 확정
-    @PutMapping("/photo-consent")
+    @PostMapping("/photo-consent")
     public ResponseEntity<ApiResponse<UsersPhotoConsentResponse>> putPhotoConsent(
             @RequestBody UsersPhotoConsentRequest request
     ) {
