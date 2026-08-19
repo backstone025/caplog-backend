@@ -5,6 +5,6 @@ import com.example.caplog.domain.groups.type.Category;
 import java.util.List;
 
 public record GroupsGetCategoriesResponse(
-        List<Category> categories
+        List<String> categories
 ) {
 }

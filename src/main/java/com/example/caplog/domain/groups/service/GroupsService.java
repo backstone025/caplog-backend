@@ -26,10 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -76,7 +73,12 @@ public class GroupsService {
 
     // #5 그룹 카테고리 목록 조회 API
     public GroupsGetCategoriesResponse getCategories() {
-        List<Category> categories = Arrays.asList(Category.values());
+        List<String> categories = new ArrayList<>();
+        categories.add("전체");
+        categories.add("학습");
+        categories.add("학교");
+        categories.add("일상");
+        categories.add("기타");
         return new GroupsGetCategoriesResponse(categories);
     }
 
