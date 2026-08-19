@@ -7,6 +7,7 @@ import com.example.caplog.domain.groups.entity.Groups;
 import com.example.caplog.domain.groups.repository.GroupsRepository;
 import com.example.caplog.domain.groups.type.Category;
 import com.example.caplog.domain.images.service.ImagesService;
+import com.example.caplog.domain.schedule.dto.ScheduleDeleteResponse;
 import com.example.caplog.domain.schedule.dto.ScheduleDetailsResponse;
 import com.example.caplog.domain.schedule.dto.ScheduleUpdateRequest;
 import com.example.caplog.domain.schedule.dto.ScheduleUpdateResponse;
@@ -18,6 +19,7 @@ import com.example.caplog.global.error.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.caplog.domain.images.entity.Images;
 
 import java.util.List;
 import java.util.Objects;
@@ -717,4 +719,71 @@ public class ScheduleService {
                     + " / "
                     + secondTitle;
         }
+
+    @Transactional
+    public ScheduleDeleteResponse deleteSchedule(Long scheduleId) {
+
+        // 1. 현재 로그인 사용자
+        Users user = authService.getCurrentUser();
+
+        // 2. 본인의 Schedule 조회
+        Schedule schedule = scheduleRepository
+                .findByScheduleIdAndUser(scheduleId, user)
+                .orElseThrow(() ->
+                        new GeneralException(
+                                GlobalErrorCode.SCHEDULE_DELETE_NOT_FOUND
+                        )
+                );
+
+        // 3. 현재 그룹 기억
+        Groups group = schedule.getGroups();
+
+        // 4. Schedule에 연결된 Event 조회
+        List<Event> events =
+                eventRepository.findBySchedule(schedule);
+
+        // 5. Event가 가지고 있는 이미지 저장
+        List<Images> images = events.stream()
+                .map(Event::getImages)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        /*
+         * 6. Schedule 삭제
+         *
+         * Event는 Schedule FK의 ON DELETE CASCADE로 같이 삭제
+         */
+        scheduleRepository.delete(schedule);
+        scheduleRepository.flush();
+
+        /*
+         * 7. 이미지 삭제
+         *
+         * 이미지 1개 = Schedule 1개가 보장되므로
+         * 다른 곳에서 사용하는지 별도 검사하지 않음.
+         */
+        for (Images image : images) {
+            imagesService.delete(image.getImageId());
+        }
+
+        /*
+         * 8. 그룹 안에 Schedule이 몇 개 남았는지 확인
+         */
+        long remainingScheduleCount =
+                scheduleRepository.countByGroups(group);
+
+        /*
+         * 0개면 원래 단일정보였던 것.
+         * 빈 Groups도 삭제.
+         *
+         * 1개 이상이면 Groups 유지.
+         * 1개가 남으면 목록에서 단일정보로 보여줌.
+         */
+        if (remainingScheduleCount == 0) {
+            groupsRepository.delete(group);
+        }
+
+        return ScheduleDeleteResponse.success();
     }
+}
