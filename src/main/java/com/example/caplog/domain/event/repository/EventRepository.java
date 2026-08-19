@@ -57,4 +57,16 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("user") Users user,
             @Param("startDay") LocalDateTime startDay,
             @Param("endDay") LocalDateTime endDay);
+
+    //이미지 가져오기
+    @Query("""
+        SELECT e
+        FROM Event e
+        LEFT JOIN FETCH e.images
+        WHERE e.schedule = :schedule
+        ORDER BY e.eventId ASC
+        """)
+    List<Event> findAllByScheduleWithImages(
+            @Param("schedule") Schedule schedule
+    );
 }
