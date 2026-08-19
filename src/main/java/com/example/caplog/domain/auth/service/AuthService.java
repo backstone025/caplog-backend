@@ -50,7 +50,7 @@ public class AuthService {
     public UsersAuthResponse login(UsersAuthRequest request) {
         // 1. 인증 위임 (검증 및 인증 객체 생성)
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.username(), request.password())
+                new UsernamePasswordAuthenticationToken(request.userName(), request.password())
         );
 
         // 2. 인증된 객체에서 username을 추출 (DB에서 안전하게 다시 조회)
@@ -64,14 +64,14 @@ public class AuthService {
 
     public UsersAuthResponse signup(UsersAuthRequest request) {
         // 1. 검증
-        checkUsernameExists(request.username());
-        checkUserLoginIdForm(request.username());
+        checkUsernameExists(request.userName());
+        checkUserLoginIdForm(request.userName());
         checkUserPasswordForm(request.password());
         String encodedPassword = passwordEncoder.encode(request.password());
 
         // 2. 저장
         // Users 객체 생성
-        Users user = Users.createUsers(request.username(), encodedPassword);
+        Users user = Users.createUsers(request.userName(), encodedPassword);
         // UsersDetails 객체 생성
         UsersDetails usersDetails = UsersDetails.createUsersDetails(user);
         // DB 저장
@@ -97,7 +97,7 @@ public class AuthService {
             throw new GeneralException(AuthException.LOGIN_ID_BAD_FORM);
         }
         // 한글, 영어(대소문자) 20자 이내
-        String regex = "^[a-zA-Z가-힣]{1,20}$";
+        String regex = "^[a-zA-Z가-힣 ]{1,20}$";
 
         if(!loginId.matches(regex)){
             throw new GeneralException(AuthException.LOGIN_ID_BAD_FORM);
