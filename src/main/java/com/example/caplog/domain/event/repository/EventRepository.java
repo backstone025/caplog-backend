@@ -74,4 +74,23 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             Long eventId,
             Schedule schedule
     );
+
+    //날짜범위 내 이벤트 가져오기
+    @Query("""
+        SELECT e
+        FROM Event e
+        JOIN FETCH e.schedule s
+        JOIN s.groups g
+        LEFT JOIN FETCH e.images i
+        WHERE g.user = :user
+          AND e.startAt IS NOT NULL
+          AND e.startAt >= :startDateTime
+          AND e.startAt <= :endDateTime
+        ORDER BY e.startAt ASC
+        """)
+    List<Event> findEventsByDateRange(
+            @Param("user") Users user,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime
+    );
 }
