@@ -16,6 +16,8 @@ services:
       TOKEN_PUBLIC_KEY: ${TOKEN_PUBLIC_KEY}
       TOKEN_PRIVATE_KEY: ${TOKEN_PRIVATE_KEY}
 
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+
     networks:
       - app-network
 

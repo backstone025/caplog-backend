@@ -1,4 +1,4 @@
-package com.example.caplog.domain.users.service;
+package com.example.caplog.domain.auth.service;
 
 import com.example.caplog.domain.users.entity.Users;
 import com.example.caplog.domain.users.repository.UsersRepository;
@@ -15,13 +15,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Users user = usersRepository.findByUsername(username);
+        Users user = usersRepository.findByLoginId(username);
         // 사용자 존재여부 확인
         if (user == null) {
             throw new UsernameNotFoundException("존재하지 않는 사용자 아이디입니다. : " + username);
         }
         return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
+                .username(user.getLoginId())
                 .password(user.getPassword())
                 .roles("USER")
                 .build();

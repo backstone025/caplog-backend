@@ -1,77 +1,122 @@
-name: CD
+name: Caplog Prod Deploy CI/CD
 
 on:
   push:
-    branches: [ main ]
-env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-  ECR_REGISTRY: 242777378795.dkr.ecr.ap-northeast-2.amazonaws.com
-  ECR_REPOSITORY: caplog-api
+    branches:
+      - main
+
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: 코드 체크아웃
-        uses: actions/checkout@v3
-      - name: Java 17 세팅
-        uses: actions/setup-java@v3
+      # 1. 소스 코드 체크아웃
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # 2. Firebase Key 파일 자동 생성
+      - name: Create Firebase Service Account JSON
+        run: |
+          mkdir -p ./src/main/resources
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" > ./src/main/resources/firebase-service-account.json
+
+      # 3. Java 21 및 빌드 환경 세팅
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
-      - name: Gradle 빌드
-        run: |
-          chmod +x gradlew
-          ./gradlew build -x test
-      - name: AWS 자격증명 설정
-        uses: aws-actions/configure-aws-credentials@v2
+          cache: 'gradle'
+
+      # 4. Gradle 빌드
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew bootJar -x test
+
+      # 5. Docker Hub 로그인
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID}}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      - name: ECR 로그인
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Docker 이미지 빌드 및 ECR Push
+      # 6. Docker 이미지 빌드 및 푸시
+      - name: Build and Push Docker Image
         run: |
-          set -e
-            
-          IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
-            
-          echo "빌드할 이미지: ${IMAGE_URI}"
-            
-          docker build -t "${IMAGE_URI}" .
-          docker push "${IMAGE_URI}"
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/caplog-api:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/caplog-api:latest
 
-      - name: ECR 이미지 등록 확인
-        run: |
-          aws ecr describe-images \
-            --repository-name "${ECR_REPOSITORY}" \
-            --image-ids imageTag=latest \
-            --region "${AWS_REGION}"
-
-      - name: EC2 배포
-        uses: appleboy/ssh-action@v1
+      # 7. EC2 SSH 접속 및 Blue/Green 무중단 배포 진행
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
           script: |
-            set -e
-                  
-            cd /home/ubuntu/caplog
-                  
-            git fetch origin
-            git reset --hard origin/main
-                  
-            aws ecr get-login-password --region ap-northeast-2 \
-              | docker login \
-                --username AWS \
-                --password-stdin \
-                242777378795.dkr.ecr.ap-northeast-2.amazonaws.com
-                  
-            docker compose pull
-            docker compose up -d
-                  
-            docker compose ps
+            cd /home/${{ secrets.USERNAME }}/caplog
+
+            # .env 파일 생성
+            cat << EOF > .env
+            DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+            SPRING_PROFILES_ACTIVE=prod
+            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+            SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
+            SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+            TOKEN_PUBLIC_KEY=${{ secrets.TOKEN_PUBLIC_KEY }}
+            TOKEN_PRIVATE_KEY=${{ secrets.TOKEN_PRIVATE_KEY }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            EOF
+
+            # 공통 인프라(DB, Qdrant, Nginx) 최우선 구동
+            docker compose up -d db qdrant nginx
+
+            # 현재 실행 중인 백엔드 컨테이너 확인 (Blue vs Green)
+            IS_BLUE=$(docker ps | grep caplog-api-blue || true)
+
+            if [ -z "$IS_BLUE" ]; then
+              TARGET_CURRENT="green"
+              TARGET_UP="blue"
+              TARGET_PORT="8080"
+            else
+              TARGET_CURRENT="blue"
+              TARGET_UP="green"
+              TARGET_PORT="8081"
+            fi
+
+            echo ">>> 배포 시작: caplog-api-${TARGET_UP}"
+
+            # 최신 이미지 다운로드 및 타겟 컨테이너 실행
+            docker compose pull caplog-api-${TARGET_UP}
+            docker compose up -d caplog-api-${TARGET_UP}
+
+            # Health Check (최대 60초 대기)
+            echo ">>> Health Check 수행 중..."
+            for i in {1..12}; do
+              sleep 5
+              REQUEST=$(curl -s http://localhost:${TARGET_PORT}/actuator/health || echo "DOWN")
+              if [[ "$REQUEST" == *"UP"* ]]; then
+                echo ">>> Health Check 성공!"
+                break
+              fi
+              echo ">>> 대기 중... ($i/12)"
+            done
+
+            # Nginx 라우팅 스위칭
+            echo "set \$service_url http://caplog-api-${TARGET_UP}:8080;" > ./nginx/service-url.inc
+            docker exec nginx nginx -s reload
+
+            # 구버전 컨테이너 종료 (이전 컨테이너가 존재할 경우만)
+            if docker ps | grep -q "caplog-api-${TARGET_CURRENT}"; then
+              echo ">>> 이전 버전(caplog-api-${TARGET_CURRENT}) 종료"
+              docker compose stop caplog-api-${TARGET_CURRENT}
+            fi
+
+            # 불필요한 구형 이미지 정리
             docker image prune -f

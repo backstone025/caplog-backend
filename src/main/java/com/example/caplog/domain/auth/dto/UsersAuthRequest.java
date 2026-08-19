@@ -1,4 +1,4 @@
-package com.example.caplog.domain.users.dto;
+package com.example.caplog.domain.auth.dto;
 
 public record UsersAuthRequest(
         String username,    // 사용자 아이디
