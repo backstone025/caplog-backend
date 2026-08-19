@@ -26,6 +26,10 @@ public class Groups {
         this.category = category;
     }
 
+    public void updateCategory(Category category) {
+        this.category = category;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long groupId;               // 그룹 아이디

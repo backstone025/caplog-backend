@@ -43,4 +43,16 @@ public class Schedule {
     private LocalDateTime createdAt;    // 생성 일시
 
     private LocalDateTime updatedAt;    // 수정 일시
+
+    public void updateSchedule(
+            String title,
+            String aiSummary
+    ) {
+        this.title = title;
+        this.aiSummary = aiSummary;
+    }
+
+    public void changeGroup(Groups groups) {
+        this.groups = groups;
+    }
 }
