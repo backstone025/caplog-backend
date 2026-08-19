@@ -15,6 +15,7 @@ public enum GlobalErrorCode implements BaseErrorCode {
     SCHEDULE_NOT_FOUND("SCHEDULE_404", "존재하지 않는 일정입니다.", HttpStatus.NOT_FOUND),
     SCHEDULE_INVALID_DETAILS("SCHEDULE_4003", "입력하신 상세 정보에 유효하지 않은 값이 포함되어 있습니다.", HttpStatus.BAD_REQUEST),
     GROUP_NOT_FOUND("GROUP_4041", "존재하지 않는 그룹입니다.", HttpStatus.NOT_FOUND),
+    SCHEDULE_INVALID_PAGE("SCHEDULE_4001", "입력한 페이지는 범위 내 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
     SCHEDULE_DELETE_NOT_FOUND("SCHEDULE_4042", "존재하지 않는 일정입니다.", HttpStatus.NOT_FOUND);
 
 
