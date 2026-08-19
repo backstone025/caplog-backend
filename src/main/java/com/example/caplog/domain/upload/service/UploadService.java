@@ -103,16 +103,20 @@ public class UploadService {
     }
 
     private Groups resolveGroup(ConfirmRequest request, Users user) {
-        // 기존 groupId가 전달된 경우
-        if (request.groupId() != null) {
+        // 1. 기존 groupId가 전달되었고 0보다 큰 유효한 ID인 경우 조회
+        if (request.groupId() != null && request.groupId() > 0) {
             return groupsRepository.findById(request.groupId()).orElse(null);
         }
-        // 그룹명이 전달되었으나 매칭된 groupId가 없는 경우 새로 생성
+
+        // 2. groupId가 0이거나 null이지만, 그룹명(group)이 입력되어 들어온 경우 신규 그룹 생성
         if (request.group() != null && !request.group().isBlank()) {
             Groups newGroup = Groups.createGroups(user, request.group(), request.category());
             return groupsRepository.save(newGroup);
         }
-        return null;
+
+        // 3. 그룹 선택/입력이 없는 경우
+        Groups newGroup = Groups.createGroups(user, request.title(), request.category());
+        return groupsRepository.save(newGroup);
     }
 
     private LocalDateTime parseToLocalDateTime(String dateStr) {
