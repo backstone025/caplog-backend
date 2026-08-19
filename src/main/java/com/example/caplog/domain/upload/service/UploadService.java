@@ -54,7 +54,7 @@ public class UploadService {
                 image.getImageId(), image.getImageKey());
 
         log.info("[UploadService] AI 이미지 분석 연동 시작 - ImageId: {}", image.getImageId());
-        UploadResponse response = aiExtractService.processImageAnalysis(image, currentUser.getUsersId());
+        UploadResponse response = aiExtractService.processImageAnalysis(file, image.getImageId(), currentUser.getUsersId());
         log.info("[UploadService] AI 이미지 분석 완료 - ImageId: {}, 추출된 이벤트 수: {}",
                 image.getImageId(), response.events() != null ? response.events().size() : 0);
 
