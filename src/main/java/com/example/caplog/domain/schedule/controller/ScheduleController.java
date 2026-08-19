@@ -1,6 +1,8 @@
 package com.example.caplog.domain.schedule.controller;
 
 import com.example.caplog.domain.schedule.dto.ScheduleDetailsResponse;
+import com.example.caplog.domain.schedule.dto.ScheduleUpdateRequest;
+import com.example.caplog.domain.schedule.dto.ScheduleUpdateResponse;
 import com.example.caplog.domain.schedule.service.ScheduleService;
 import com.example.caplog.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,24 @@ public class ScheduleController {
 
         ScheduleDetailsResponse response =
                 scheduleService.getScheduleDetails(scheduleId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(response)
+        );
+    }
+
+    @PutMapping("/{scheduleId}")
+    public ResponseEntity<ApiResponse<ScheduleUpdateResponse>>
+    updateSchedule(
+            @PathVariable Long scheduleId,
+            @RequestBody ScheduleUpdateRequest request
+    ) {
+
+        ScheduleUpdateResponse response =
+                scheduleService.updateSchedule(
+                        scheduleId,
+                        request
+                );
 
         return ResponseEntity.ok(
                 ApiResponse.success(response)
