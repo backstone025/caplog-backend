@@ -1,5 +1,6 @@
 package com.example.caplog.domain.upload.controller;
 
+import com.example.caplog.domain.upload.dto.ConfirmRequest;
 import com.example.caplog.domain.upload.dto.UploadResponse;
 import com.example.caplog.domain.upload.service.UploadService;
 import com.example.caplog.global.response.ApiResponse;
@@ -20,4 +21,10 @@ public class UploadController {
         UploadResponse response = uploadService.upload(file);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+//    @PostMapping("/confirm")
+//    public ResponseEntity<ApiResponse> confirm(@RequestParam ConfirmRequest confirmRequest) {
+//    }
+
+
 }
