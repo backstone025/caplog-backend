@@ -78,10 +78,13 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/service-url.inc:/etc/nginx/conf.d/service-url.inc
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
-      - caplog-api
+      - caplog-api-blue
     networks:
       - app-network
 
