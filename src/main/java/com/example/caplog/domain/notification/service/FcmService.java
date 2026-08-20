@@ -1,9 +1,6 @@
 package com.example.caplog.domain.notification.service;
 
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.FirebaseMessagingException;
-import com.google.firebase.messaging.Message;
-import com.google.firebase.messaging.Notification;
+import com.google.firebase.messaging.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +8,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class FcmService {
+    private static final String CHANNEL_ID = "caplog_popup_channel";
 
     // 특정 사용자 FCM Token으로 푸시 알림 발송
     public void sendMessageTo(String targetToken, String title, String body,
@@ -26,7 +24,16 @@ public class FcmService {
                     .setNotification(Notification.builder()
                             .setTitle(title)
                             .setBody(body)
-                            .build()
+                            .build())
+                    .setAndroidConfig(
+                            AndroidConfig.builder()
+                                    .setPriority(AndroidConfig.Priority.HIGH)
+                                    .setNotification(
+                                            AndroidNotification.builder()
+                                                    .setChannelId(CHANNEL_ID)
+                                                    .build()
+                                            )
+                                            .build()
                     );
 
             if (targetPage != null && !targetPage.isBlank()) {
