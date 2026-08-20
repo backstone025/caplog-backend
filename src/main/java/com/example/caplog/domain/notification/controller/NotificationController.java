@@ -50,4 +50,11 @@ public class NotificationController {
         notificationService.markAlarmAsRead(alarmId);
         return ResponseEntity.ok(ApiResponse.success());
     }
+
+    //알람 푸시 테스트용 컨트롤러
+    @PostMapping("/test-push")
+    public ResponseEntity<ApiResponse<Void>> testPush() {
+        notificationService.sendTestPush();
+        return ResponseEntity.ok(ApiResponse.success());
+    }
 }
