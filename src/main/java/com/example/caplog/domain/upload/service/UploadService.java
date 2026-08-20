@@ -109,24 +109,54 @@ public class UploadService {
         );
         Schedule savedSchedule = scheduleRepository.save(schedule);
 
-        // 4. 체크된 Event 항목들만 필터링하여 생성 및 저장
-        if (request.events() != null && !request.events().isEmpty()) {
-            List<Event> eventsToSave = request.events().stream()
-                    .filter(ConfirmRequest.EventConfirmDto::isChecked) // isChecked가 true인 것만 선택
-                    .map(eventDto -> Event.createEvent(
-                            savedSchedule,
-                            image,
-                            eventDto.title(),
-                            eventDto.details(),
-                            eventDto.aiSummary(),
-                            eventDto.videoUrl(),
-                            parseToLocalDateTime(eventDto.startAt()),
-                            parseToLocalDateTime(eventDto.endAt())
-                    ))
-                    .toList();
+        // 4. 체크된 Event 항목들만 필터링하여 생성
+        List<Event> eventsToSave = request.events() == null
+                ? List.of()
+                : request.events().stream()
+                  .filter(ConfirmRequest.EventConfirmDto::isChecked)
+                  .map(eventDto -> Event.createEvent(
+                          savedSchedule,
+                          image,
+                          eventDto.title(),
+                          eventDto.details(),
+                          eventDto.aiSummary(),
+                          eventDto.videoUrl(),
+                          parseToLocalDateTime(eventDto.startAt()),
+                          parseToLocalDateTime(eventDto.endAt())
+                  ))
+                  .toList();
+
+// 5. 저장할 일정 Event가 하나도 없으면
+// 이미지 연결 유지를 위한 날짜 없는 fallback Event 생성
+        if (eventsToSave.isEmpty()) {
+
+            Event fallbackEvent = Event.createEvent(
+                    savedSchedule,
+                    image,
+                    request.title(),
+                    request.scheduleAiSummary(),
+                    request.scheduleAiSummary(),
+                    null,
+                    null,
+                    null
+            );
+
+            eventRepository.save(fallbackEvent);
+
+            log.info(
+                    "[UploadService] 일정 정보 없음 - fallback Event 저장 완료, ScheduleId: {}, ImageId: {}",
+                    savedSchedule.getScheduleId(),
+                    image.getImageId()
+            );
+
+        } else {
 
             eventRepository.saveAll(eventsToSave);
-            log.info("[UploadService] 총 {}개의 Event 저장 완료", eventsToSave.size());
+
+            log.info(
+                    "[UploadService] 총 {}개의 Event 저장 완료",
+                    eventsToSave.size()
+            );
         }
     }
 
