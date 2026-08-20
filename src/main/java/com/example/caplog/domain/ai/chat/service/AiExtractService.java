@@ -49,6 +49,7 @@ public class AiExtractService {
                 2. 언급된 날짜와 시작/종료 시간이 있다면 놓치지 말고 정확히 정리하세요.
                 3. 내용에 기반하여 어떤 형태의 일정인지(수업, 학교 행사, 개인 일정 등)를 상세히 설명하세요.
                 4. 시각적으로 확인되지 않는 내용을 억지로 추측하거나 지어내지 마세요.
+                
                 """;
 
         log.info("[AiExtractService] 1단계: Vision LLM 직접 호출 (바이트 바이너리 전송) - 파일명: {}", file.getOriginalFilename());
