@@ -76,7 +76,10 @@ public class AiExtractService {
                 - **모든 텍스트 항목(title, details, aiSummary, scheduleAiSummary, group 등)은 반드시 한국어(Korean)로 작성하세요.**
                 
                 [분석 및 생성 지침]
-                1. title: 전체 일정을 대표하는 제목을 한국어로 작성하세요.반드시 출력 형식의 모든 필드를 포함하세요.최상위 title 필드는 절대 생략하지 마세요. events 내부의 title과 별개로, 최상위 title도 반드시 작성해야 합니다
+                1. title:
+                    - 전체 일정을 대표하는 한국어 제목을 반드시 생성하세요.
+                    - 최상위 title은 필수이며 null, 빈 문자열, 누락으로 반환하지 마세요.
+                    - events 내부의 title과는 별개의 필드입니다.
                 2. imageId: 제공된 이미지 ID({imageId})를 그대로 지정하세요.
                 3. events: 추출된 세부 일정/이벤트 목록을 생성하세요.
                    - title: 이벤트 제목 (한국어)
@@ -89,6 +92,12 @@ public class AiExtractService {
                 4. category: 다음 중 가장 적절한 하나를 선택하세요 (STUDY, SCHOOL, DAILY, ETC)
                 5. scheduleAiSummary: 전체 일정 분석 결과에 대한 종합 AI 요약 (한국어)
                 6. group: 관련된 그룹명이나 과목명이 명시되어 있다면 한국어로 작성하고, 없으면 null로 처리하세요.
+                [JSON 출력 규칙]
+                        - 출력 형식에 정의된 모든 필드를 반드시 포함하세요.
+                        - 각 JSON key는 정확히 한 번만 출력하세요.
+                        - 동일한 key를 중복 생성하지 마세요.
+                        - 임의의 필드를 추가하지 마세요.
+                        - JSON 외의 설명이나 Markdown을 출력하지 마세요.
                 
                 {format}
                 """;
