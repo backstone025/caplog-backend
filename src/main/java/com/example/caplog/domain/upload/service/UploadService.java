@@ -103,18 +103,22 @@ public class UploadService {
     }
 
     private Groups resolveGroup(ConfirmRequest request, Users user) {
-        // 1. 기존 groupId가 전달되었고 0보다 큰 유효한 ID인 경우 조회
+        // 1. 유효한 groupId가 전달된 경우 (단, groupId가 0 이하이거나 null이 아니어야 함)
         if (request.groupId() != null && request.groupId() > 0) {
             return groupsRepository.findById(request.groupId()).orElse(null);
         }
 
-        // 2. groupId가 0이거나 null이지만, 그룹명(group)이 입력되어 들어온 경우 신규 그룹 생성
-        if (request.group() != null && !request.group().isBlank()) {
+        // 2. 사용자가 직접 신규 그룹명을 입력해서 전달한 경우
+        // ("선택 안함"이라는 문구이거나 빈 값인 경우는 제외)
+        if (request.group() != null
+                && !request.group().isBlank()
+                && !"선택 안함".equalsIgnoreCase(request.group().trim())) {
+
             Groups newGroup = Groups.createGroups(user, request.group(), request.category());
             return groupsRepository.save(newGroup);
         }
 
-        // 3. 그룹 선택/입력이 없는 경우
+        // 3. "선택 안함"이거나 그룹 지정이 없는 경우 -> ConfirmRequest의 title로 그룹 생성
         Groups newGroup = Groups.createGroups(user, request.title(), request.category());
         return groupsRepository.save(newGroup);
     }
