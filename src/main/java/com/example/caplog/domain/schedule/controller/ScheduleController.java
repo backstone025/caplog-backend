@@ -92,4 +92,17 @@ public class ScheduleController {
                 ApiResponse.success(response)
         );
     }
+
+    @DeleteMapping("/{scheduleId}")
+    public ResponseEntity<ApiResponse<Void>>
+    deleteSchedule(
+            @PathVariable Long scheduleId
+    ) {
+
+        scheduleService.deleteSchedule(scheduleId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(null)
+        );
+    }
 }
