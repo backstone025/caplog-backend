@@ -179,8 +179,8 @@ public class NotificationService {
 
         fcmService.sendMessageTo(
                 fcmToken,
-                "테스트 알림",
-                "FCM 푸시 테스트입니다.",
+                "얼마 남지 않은 일정",
+                "기숙사 신청 마감이 2일 남았어요!",
                 "/notification"
         );
     }
