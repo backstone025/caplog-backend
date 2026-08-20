@@ -24,10 +24,10 @@ public record ScheduleUpdateRequest(
             Long id,
             String title,
 
-            @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+
             LocalDateTime startAt,
 
-            @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+
             LocalDateTime endAt,
 
             String details
