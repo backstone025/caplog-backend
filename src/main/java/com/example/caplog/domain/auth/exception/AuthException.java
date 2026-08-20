@@ -6,8 +6,8 @@ import org.springframework.http.HttpStatus;
 public enum AuthException implements BaseErrorCode {
     LOGIN_ID_ALREADY_EXIST("AUTH_4001", "이미 존재하는 아이디 입니다", HttpStatus.BAD_REQUEST),
     LOGIN_ID_BAD_FORM("AUTH_4002", "닉네임은 한/영 20자 이내야 합니다.", HttpStatus.BAD_REQUEST),
-    PASSWORD_BAD_FORM("AUTH_4003", "비밀번호는 숫자 4자 이어야 합니다.", HttpStatus.BAD_REQUEST)
-    ;
+    PASSWORD_BAD_FORM("AUTH_4003", "비밀번호는 숫자 4자 이어야 합니다.", HttpStatus.BAD_REQUEST),
+    LOGIN_FAILED("AUTH_4004", "아이디 또는 비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED);
 
     private final String code;
     private final String message;

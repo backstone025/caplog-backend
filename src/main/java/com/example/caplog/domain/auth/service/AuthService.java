@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.AuthenticationException;
 
 import java.util.Objects;
 
@@ -48,29 +49,49 @@ public class AuthService {
     }
 
     public UsersAuthResponse login(UsersAuthRequest request) {
-        // 1. 인증 위임 (검증 및 인증 객체 생성)
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.userName(), request.password())
-        );
 
-        // 2. 인증된 객체에서 username을 추출 (DB에서 안전하게 다시 조회)
-        Users user = usersRepository.findByLoginId(authentication.getName());
+        // 1. 기본 입력값 검증
+        if (request.userName() == null || request.userName().isBlank()
+                || request.password() == null || request.password().isBlank()) {
+            throw new GeneralException(AuthException.LOGIN_FAILED);
+        }
 
-        // 3. 토큰 발행
-        String accessToken = jwtProvider.createToken(authentication, 3600L * 24 * 7, user.getUsersId());
+        try {
+            // 2. 로그인 인증
+            Authentication authentication = authenticationManager.authenticate(
+                            new UsernamePasswordAuthenticationToken(
+                                    request.userName(),
+                                    request.password()
+                            )
+                    );
 
-        return new UsersAuthResponse(accessToken);
+            // 3. 사용자 조회
+            Users user = usersRepository.findByLoginId(authentication.getName());
+
+            if (user == null) {throw new GeneralException(AuthException.LOGIN_FAILED);}
+
+            // 4. 토큰 발급
+            String accessToken = jwtProvider.createToken(authentication,
+                    3600L * 24 * 7, user.getUsersId());
+
+            return new UsersAuthResponse(accessToken);
+
+        } catch (AuthenticationException e) {
+            throw new GeneralException(AuthException.LOGIN_FAILED);
+        }
     }
 
     public UsersAuthResponse signup(UsersAuthRequest request) {
         // 1. 검증
-        checkUsernameExists(request.userName());
         checkUserLoginIdForm(request.userName());
         checkUserPasswordForm(request.password());
+        //2.아이디 중복 검증
+        checkUsernameExists(request.userName());
+        //3. 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.password());
 
-        // 2. 저장
-        // Users 객체 생성
+        //
+        // 4.Users 객체 생성
         Users user = Users.createUsers(request.userName(), encodedPassword);
         // UsersDetails 객체 생성
         UsersDetails usersDetails = UsersDetails.createUsersDetails(user);
