@@ -69,7 +69,12 @@ public class NotificationSchedulerService {
                 List<Notification> imminentNotifications = createImminentNotifications(user);
                 notificationRepository.saveAll(imminentNotifications);
                 imminentNotifications.forEach(n-> {
-                    sendMessageToUser(NotificationType.IMMINENT, usersDetail, n.getTitle(), n.getContent());
+                    sendMessageToUser(
+                            NotificationType.IMMINENT,
+                            usersDetail,
+                            n.getSchedule() != null ? n.getSchedule().getScheduleId() : null,
+                            n.getContent(),
+                            n.getContent());
                 });
 
                 log.info("[IMMINENT 알림] 저장 완료 (userId: {}, 건수: {})", user.getUsersId(), imminentNotifications.size());
@@ -80,7 +85,12 @@ public class NotificationSchedulerService {
                 List<Notification> unviewedNotifications = createUnviewedNotifications(user);
                 notificationRepository.saveAll(unviewedNotifications);
                 unviewedNotifications.forEach(n -> {
-                    sendMessageToUser(NotificationType.UNVIEWED, usersDetail, n.getTitle(), n.getContent());
+                    sendMessageToUser(
+                            NotificationType.UNVIEWED,
+                            usersDetail,
+                            n.getSchedule() != null ? n.getSchedule().getScheduleId() : null,
+                            n.getTitle(),
+                            n.getContent());
                 });
                 log.info("[UNVIEWED 알림] 저장 완료 (userId: {}, 건수: {})", user.getUsersId(), unviewedNotifications.size());
             }
@@ -93,6 +103,9 @@ public class NotificationSchedulerService {
                     sendMessageToUser(
                             NotificationType.AI_RECOMMENDED,
                             usersDetail,
+                            aiRecommendedNotification.getSchedule() != null
+                                    ? aiRecommendedNotification.getSchedule().getScheduleId()
+                                    : null,
                             aiRecommendedNotification.getTitle(),
                             aiRecommendedNotification.getContent());
                     log.info("[AI_RECOMMENDED 알림] 저장 완료 (userId: {})", user.getUsersId());
@@ -212,13 +225,24 @@ public class NotificationSchedulerService {
     }
 
     // FCM 발송
-    private void sendMessageToUser(NotificationType notificationType, UsersDetails usersDetails, String title, String content) {
-        log.debug("[FCM 발송 시도] type: {}, targetUserId: {}", notificationType, usersDetails.getUserId());
+    private void sendMessageToUser(NotificationType notificationType, UsersDetails usersDetails,
+                                   Long scheduleId,String title, String content) {
+        log.debug("[FCM 발송 시도] type: {}, targetUserId: {},scheduleId: {}",
+                notificationType,
+                usersDetails.getUserId(),
+                scheduleId
+        );
 
         String fcmToken = usersDetails.getFcmToken();
+        String targetPage =
+                "/schedule/details/" + scheduleId;
 
         if (fcmToken != null && !fcmToken.isBlank()) {
-            fcmService.sendMessageTo(fcmToken, title, content);
+            fcmService.sendMessageTo(
+                    fcmToken,
+                    title,
+                    content,
+                    targetPage);
         }else {
             log.warn("[FCM 스킵] FCM 토큰이 없습니다 - userId: {}", usersDetails.getUserId());
         }
