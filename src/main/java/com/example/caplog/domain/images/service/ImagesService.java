@@ -83,4 +83,10 @@ public class ImagesService {
         }
         return null;
     }
+
+    @Transactional
+    public void completeProcessing(Long imageId) {
+        Images image = getImage(imageId);
+        image.updateStatus(ImageStatus.COMPLETED);
+    }
 }
