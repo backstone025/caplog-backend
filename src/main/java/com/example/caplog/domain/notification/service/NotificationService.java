@@ -181,7 +181,7 @@ public class NotificationService {
                 fcmToken,
                 "테스트 알림",
                 "FCM 푸시 테스트입니다.",
-                "/notifications"
+                "/notification"
         );
     }
 }
