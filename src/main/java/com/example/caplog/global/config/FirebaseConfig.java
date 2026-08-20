@@ -5,7 +5,8 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
+import java.io.FileInputStream;
+
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
@@ -17,9 +18,7 @@ public class FirebaseConfig {
 
     @PostConstruct
     public void init() {
-        try {
-            // resources 폴더의 firebase-service-account.json을 읽어온다.
-            InputStream serviceAccount = new ClassPathResource("firebase-service-account.json").getInputStream();
+        try (InputStream serviceAccount = new FileInputStream("/app/firebase-service-account.json")){
 
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
