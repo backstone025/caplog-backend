@@ -43,6 +43,7 @@ public class NotificationService {
     private final EventRepository eventRepository;
     private final ImagesService imagesService;
     private final UsersService usersService;
+    private final FcmService fcmService;
 
     // #9-1 이벤트 알림 목록 조회
     public NotificationGetAlarmListResponse getAlarmList(Integer page, NotificationType type) {
@@ -163,5 +164,24 @@ public class NotificationService {
     public void markAlarmAsRead(Long alarmId) {
         Notification notification = notificationRepository.findById(alarmId).orElseThrow();
         notification.markAsRead();
+    }
+
+    //테스트 알람 푸시
+    public void sendTestPush() {
+        Users user = authService.getCurrentUser();
+        UsersDetails usersDetails = usersService.getUsersDetails();
+
+        String fcmToken = usersDetails.getFcmToken();
+
+        if (fcmToken == null || fcmToken.isBlank()) {
+            throw new IllegalStateException("FCM 토큰이 없습니다.");
+        }
+
+        fcmService.sendMessageTo(
+                fcmToken,
+                "테스트 알림",
+                "FCM 푸시 테스트입니다.",
+                "/notifications"
+        );
     }
 }
