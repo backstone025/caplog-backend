@@ -76,7 +76,7 @@ public class AiExtractService {
                 - **모든 텍스트 항목(title, details, aiSummary, scheduleAiSummary, group 등)은 반드시 한국어(Korean)로 작성하세요.**
                 
                 [분석 및 생성 지침]
-                1. title: 전체 일정을 대표하는 제목을 한국어로 작성하세요.
+                1. title: 전체 일정을 대표하는 제목을 한국어로 작성하세요.반드시 출력 형식의 모든 필드를 포함하세요.최상위 title 필드는 절대 생략하지 마세요. events 내부의 title과 별개로, 최상위 title도 반드시 작성해야 합니다
                 2. imageId: 제공된 이미지 ID({imageId})를 그대로 지정하세요.
                 3. events: 추출된 세부 일정/이벤트 목록을 생성하세요.
                    - title: 이벤트 제목 (한국어)
@@ -102,8 +102,24 @@ public class AiExtractService {
         String responseContent = chatClient.prompt(step2Template.create())
                 .call()
                 .content();
+        log.info("[AiExtractService] 2단계 AI 원본 응답: {}", responseContent);
 
         UploadResponse rawResponse = converter.convert(responseContent);
+
+        if (rawResponse == null) {
+            log.error("[AiExtractService] AI 응답 DTO 변환 실패");
+            throw new IllegalStateException("AI 응답 변환에 실패했습니다.");
+        }
+
+        if (rawResponse.title() == null || rawResponse.title().isBlank()) {
+            log.error(
+                    "[AiExtractService] AI 분석 결과 title 누락 - responseContent: {}",
+                    responseContent
+            );
+            throw new IllegalStateException("AI 분석 결과 title이 비어 있습니다.");
+        }
+
+
         log.info("[AiExtractService] LLM 응답 DTO 파싱 완료 - Title: '{}', Category: '{}', RawGroup: '{}'",
                 rawResponse.title(), rawResponse.category(), rawResponse.group());
 

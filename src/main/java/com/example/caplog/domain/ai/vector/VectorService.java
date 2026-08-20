@@ -53,6 +53,10 @@ public class VectorService {
 
     // [사용 범위] : 단일 그룹에 대해서만 조회
     public List<Document> searchGroupsVector(Long userId, String query) {
+        if (query == null || query.isBlank()) {
+            log.warn("[Vector] 검색어가 null 또는 빈 문자열입니다. Vector 검색을 생략합니다.");
+            return List.of();
+        }
         SearchRequest searchRequest = SearchRequest.builder()
                 .query(query)
                 .topK(5)                                                                // 가장 유사한 상위 5개
